@@ -1,6 +1,5 @@
 #include "../Shared/Shared.hpp"
 
-int main() {
-    std::cout << "Hello CMake." << std::endl;
+int main(int argc, char **argv) {
     return 0;
 }

@@ -7,14 +7,13 @@ using Bus::GUID;
 using Bus::GUID2Str;
 using Bus::str2GUID;
 using Bus::Unmoveable;
+using Bus::Name;
 
 #include <vector>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <memory>
-
-class Config;
 
 class PluginHelperAPI final {
 public:
