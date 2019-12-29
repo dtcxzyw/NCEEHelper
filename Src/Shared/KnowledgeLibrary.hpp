@@ -1,9 +1,16 @@
 #pragma once
 #include "Config.hpp"
 
-class KnowledgeLibrary :public Bus::ModuleFunctionBase {
+using GUIDTable = std::vector<GUID>;
+
+struct TestResult final {
+    GUID kpID;
+    bool result;
+};
+
+class KnowledgeLibrary : public Bus::ModuleFunctionBase {
 protected:
-    explicit KnowledgeLibrary(Bus::ModuleInstance &instance)
+    explicit KnowledgeLibrary(Bus::ModuleInstance& instance)
         : ModuleFunctionBase(instance) {}
 
 public:
@@ -11,5 +18,8 @@ public:
         return "NCEEHelper.KnowledgeLibrary";
     }
 
-    virtual GUID load(std::shared_ptr<Config> cfg) = 0;
+    virtual void load(const fs::path& dataBase) = 0;
+    virtual GUIDTable getTable() = 0;
+    virtual TestResult test(GUID kpID) = 0;
+    virtual std::string summary() = 0;
 };

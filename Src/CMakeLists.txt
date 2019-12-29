@@ -1,2 +1,4 @@
 cmake_minimum_required (VERSION 3.8)
-ADD_SUBDIRECTORY(NCEEHelper)
+add_subdirectory(ThirdParty)
+add_subdirectory(NCEEHelper)
+add_subdirectory(Biology)

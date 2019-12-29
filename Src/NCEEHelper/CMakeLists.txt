@@ -1,3 +1,6 @@
 cmake_minimum_required (VERSION 3.8)
-add_executable (NCEEHelper "main.cpp")
-install (TARGETS NCEEHelper DESTINATION /)
+find_package(nlohmann_json REQUIRED)
+aux_source_directory(. SOURCE)
+add_executable (NCEEHelper ${SOURCE})
+target_link_libraries(NCEEHelper Bus)
+install (TARGETS NCEEHelper DESTINATION .)

@@ -1,0 +1,5 @@
+cmake_minimum_required (VERSION 3.8)
+aux_source_directory(. SOURCE)
+add_library (Biology SHARED ${SOURCE})
+target_link_libraries(Biology Bus)
+install (TARGETS Biology RUNTIME DESTINATION Plugins/Biology)
