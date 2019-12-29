@@ -134,8 +134,10 @@ public:
                << Clock::now().time_since_epoch().count() << ".log";
             fs::path path = mHistoryRoot / ss.str();
             std::ofstream out(path);
-            for(auto x : mRecord)
-                out << (x.result ? "T" : "F") << GUID2Str(x.kpID) << '\n';
+            for(auto x : mRecord) {
+                for(auto y : x.kpID)
+                    out << (x.result ? "T" : "F") << GUID2Str(y) << '\n';
+            }
             out.close();
             mRecord.clear();
             reporter().apply(ReportLevel::Info,

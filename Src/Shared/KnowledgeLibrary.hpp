@@ -1,10 +1,10 @@
 #pragma once
-#include "Config.hpp"
+#include "Shared.hpp"
 
 using GUIDTable = std::vector<GUID>;
 
 struct TestResult final {
-    GUID kpID;
+    std::vector<GUID> kpID;
     bool result;
 };
 

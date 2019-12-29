@@ -1,18 +1,89 @@
+#include "../Shared/Config.hpp"
 #include "../Shared/KnowledgeLibrary.hpp"
+#include "../Shared/Tester.hpp"
+#include <sstream>
 
 BUS_MODULE_NAME("NCEEHelper.Biology");
 
 class BiologyLibrary final : public KnowledgeLibrary {
 private:
+    std::unordered_map<GUID, std::shared_ptr<Tester>, GUIDHasher> mKPS;
+    uint32_t mFillCnt, mJudgeCnt;
+    fs::path mDataBase;
+
 public:
     explicit BiologyLibrary(Bus::ModuleInstance& instance)
         : KnowledgeLibrary(instance) {}
 
-    void load(const fs::path& dataBase) {}
-    GUIDTable getTable() {return {};}
-    TestResult test(GUID kpID) {return {};}
+    void load(const fs::path& dataBase) {
+        BUS_TRACE_BEG() {
+            mDataBase = dataBase;
+            Bus::FunctionId id;
+            id.guid = str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}");
+            // Fill.json
+            {
+                id.name = "JsonConfig";
+                auto cfg = system().instantiate<Config>(id);
+                if(!cfg->load(dataBase / "Fill.json"))
+                    BUS_TRACE_THROW("Failed to load Fill.json");
+                id.name = "FillTester";
+                mFillCnt = 0;
+                for(auto ele : cfg->expand()) {
+                    ++mFillCnt;
+                    auto tester = system().instantiate<Tester>(id);
+                    GUID id = tester->init(ele);
+                    auto& val = mKPS[id];
+                    if(val)
+                        BUS_TRACE_THROW(std::logic_error("GUID redefined"));
+                    val.swap(tester);
+                }
+            }
+            // Judge.json
+            {
+                id.name = "JsonConfig";
+                auto cfg = system().instantiate<Config>(id);
+                if(!cfg->load(dataBase / "Judge.json"))
+                    BUS_TRACE_THROW("Failed to load Judge.json");
+                id.name = "JudgeTester";
+                mJudgeCnt = 0;
+                for(auto ele : cfg->expand()) {
+                    ++mJudgeCnt;
+                    auto tester = system().instantiate<Tester>(id);
+                    GUID id = tester->init(ele);
+                    auto& val = mKPS[id];
+                    if(val)
+                        BUS_TRACE_THROW(std::logic_error("GUID redefined"));
+                    val.swap(tester);
+                }
+            }
+        }
+        BUS_TRACE_END();
+    }
+    GUIDTable getTable() {
+        GUIDTable res;
+        for(auto&& x : mKPS)
+            res.emplace_back(x.first);
+        return res;
+    }
+    TestResult test(GUID kpID) {
+        BUS_TRACE_BEG() {
+            TestResult res;
+            res.kpID = { kpID };
+            auto iter = mKPS.find(kpID);
+            if(iter == mKPS.end())
+                BUS_TRACE_THROW(std::logic_error("Invaild GUID"));
+            res.result = iter->second->test();
+            return res;
+        }
+        BUS_TRACE_END();
+    }
     std::string summary() {
-        return {};
+        std::stringstream ss;
+        using Clock = fs::file_time_type::clock;
+        auto ft = fs::last_write_time(mDataBase / "Fill.json");
+        auto jt = fs::last_write_time(mDataBase / "Judge.json");
+        ss << "Fill.json version:" < < < < std::endl;
+        return ss.str();
     }
 };
 
