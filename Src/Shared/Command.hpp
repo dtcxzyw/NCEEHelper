@@ -10,5 +10,5 @@ public:
     static Bus::Name getInterface() {
         return "NCEEHelper.Command";
     }
-    virtual int doCommand(int argc, char **argv, Bus::ModuleSystem &sys) = 0;
+    virtual int doCommand(int argc, char **argv) = 0;
 };

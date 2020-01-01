@@ -15,5 +15,4 @@ public:
     virtual GUID sampleTest() = 0;
     virtual std::string summary() = 0;
     virtual void recordTestResult(TestResult res) = 0;
-    virtual void flushHistory() = 0;
 };

@@ -17,10 +17,10 @@ struct TestHistory final {
 class ImportanceSampler final : public TestEngine {
 private:
     std::unordered_map<GUID, TestHistory, GUIDHasher> mHistory;
-    std::vector<TestResult> mRecord;
     std::vector<std::pair<GUID, double>> mAccBuffer;
     std::mt19937_64 mRNG;
-    fs::path mHistoryRoot;
+    std::unique_ptr<std::ofstream> mOutput;
+    fs::path mOutputPath;
     void loadRecord(const fs::path& historyFile) {
         BUS_TRACE_BEG() {
             std::ifstream in(historyFile);
@@ -81,7 +81,6 @@ public:
         : TestEngine(instance) {}
     void init(const fs::path& history, const GUIDTable& table) override {
         BUS_TRACE_BEG() {
-            mHistoryRoot = history;
             if(table.empty())
                 BUS_TRACE_THROW(std::logic_error("No knowledge point!!!"));
             for(auto id : table)
@@ -95,6 +94,10 @@ public:
             }
             buildAccBuffer();
             mRNG.seed(Clock::now().time_since_epoch().count());
+            std::stringstream ss;
+            ss << std::hex << std::uppercase
+               << Clock::now().time_since_epoch().count() << ".log";
+            mOutputPath = history / ss.str();
         }
         BUS_TRACE_END();
     }
@@ -123,32 +126,12 @@ public:
         return ss.str();
     }
     void recordTestResult(TestResult res) override {
-        mRecord.emplace_back(res);
-    }
-    void flushHistory() override {
-        BUS_TRACE_BEG() {
-            if(mRecord.empty())
-                return;
-            std::stringstream ss;
-            ss << std::hex << std::uppercase
-               << Clock::now().time_since_epoch().count() << ".log";
-            fs::path path = mHistoryRoot / ss.str();
-            std::ofstream out(path);
-            for(auto x : mRecord) {
-                for(auto y : x.kpID)
-                    out << (x.result ? "T" : "F") << GUID2Str(y) << '\n';
-            }
-            out.close();
-            mRecord.clear();
-            reporter().apply(ReportLevel::Info,
-                             "Test history has been flushed to file " +
-                                 path.string() + ".",
-                             BUS_DEFSRCLOC());
+        if(!mOutput)
+            mOutput = std::make_unique<std::ofstream>(mOutputPath);
+        for(auto x : res.kpID) {
+            (*mOutput) << (res.result ? "T" : "F") << GUID2Str(x) << '\n';
         }
-        BUS_TRACE_END();
-    }
-    ~ImportanceSampler() {
-        flushHistory();
+        mOutput->flush();
     }
 };
 

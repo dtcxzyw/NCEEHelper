@@ -1,6 +1,7 @@
 #include "../Shared/Config.hpp"
 #include "../Shared/KnowledgeLibrary.hpp"
 #include "../Shared/Tester.hpp"
+#include <ctime>
 #include <sstream>
 
 BUS_MODULE_NAME("NCEEHelper.Biology");
@@ -18,8 +19,9 @@ public:
     void load(const fs::path& dataBase) {
         BUS_TRACE_BEG() {
             mDataBase = dataBase;
-            Bus::FunctionId id;
-            id.guid = str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}");
+            Bus::FunctionId id{
+                str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), ""
+            };
             // Fill.json
             {
                 id.name = "JsonConfig";
@@ -80,9 +82,9 @@ public:
     std::string summary() {
         std::stringstream ss;
         using Clock = fs::file_time_type::clock;
-        auto ft = fs::last_write_time(mDataBase / "Fill.json");
-        auto jt = fs::last_write_time(mDataBase / "Judge.json");
-        ss << "Fill.json version:" < < < < std::endl;
+        // TODO:filetime
+        ss << "Fill.json count: " << mFillCnt << std::endl;
+        ss << "Judge.json count: " << mJudgeCnt << std::endl;
         return ss.str();
     }
 };

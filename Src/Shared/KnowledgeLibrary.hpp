@@ -5,7 +5,7 @@ using GUIDTable = std::vector<GUID>;
 
 struct TestResult final {
     std::vector<GUID> kpID;
-    bool result;
+    int result;
 };
 
 class KnowledgeLibrary : public Bus::ModuleFunctionBase {
