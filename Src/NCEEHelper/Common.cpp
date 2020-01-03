@@ -1,7 +1,10 @@
 #include "Common.hpp"
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #pragma warning(push, 0)
+#define GUID_DEFINED
+#include <rang.hpp>
 #include <unicode/regex.h>
 #include <unicode/ustream.h>
 #pragma warning(pop)
@@ -22,6 +25,7 @@ std::vector<String> getAnswer(bool& quit) {
         String one;
         while(ss >> one)
             res.emplace_back(one);
+        std::sort(res.begin(), res.end());
         return res;
     }
     BUS_TRACE_END();
@@ -37,7 +41,9 @@ std::vector<String> splitAnswer(const String& str) {
         while(matcher.find(status)) {
             CHECKSTATUS();
             res.emplace_back(matcher.group(status));
+            CHECKSTATUS();
         }
+        std::sort(res.begin(), res.end());
         return res;
     }
     BUS_TRACE_END();
@@ -63,5 +69,22 @@ bool getJudge(bool& quit) {
             return (ans.front() == "T" || ans.front() == "t");
         else
             std::cout << "请输入T/F判断" << std::endl;
+    }
+}
+
+bool compareAnswer(const std::vector<String>& stdAns,
+                   const std::vector<String>& usrAns, bool& quit) {
+    if(usrAns != stdAns) {
+        std::cout << rang::fg::yellow << "标准原因/例子有：";
+        for(auto rea : stdAns)
+            std::cout << rea << " ";
+        std::cout << rang::fg::reset << std::endl;
+        std::cout << "请手动判断T/F" << std::endl;
+        bool match = getJudge(quit);
+        return match;
+    } else {
+        std::cout << rang::fg::green << "完全正确" << rang::fg::reset
+                  << std::endl;
+        return true;
     }
 }

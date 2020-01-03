@@ -18,19 +18,18 @@ public:
 
     void load(const fs::path& dataBase) {
         BUS_TRACE_BEG() {
+            mFillCnt = mJudgeCnt = 0;
             mDataBase = dataBase;
             Bus::FunctionId id{
                 str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), ""
             };
             // Fill.json
-            /*
             {
                 id.name = "JsonConfig";
                 auto cfg = system().instantiate<Config>(id);
                 if(!cfg->load(dataBase / "Fill.json"))
                     BUS_TRACE_THROW("Failed to load Fill.json");
                 id.name = "FillTester";
-                mFillCnt = 0;
                 for(auto ele : cfg->expand()) {
                     ++mFillCnt;
                     auto tester = system().instantiate<Tester>(id);
@@ -41,7 +40,6 @@ public:
                     val.swap(tester);
                 }
             }
-            */
             // Judge.json
             {
                 id.name = "JsonConfig";
@@ -49,7 +47,6 @@ public:
                 if(!cfg->load(dataBase / "Judge.json"))
                     BUS_TRACE_THROW("Failed to load Judge.json");
                 id.name = "JudgeTester";
-                mJudgeCnt = 0;
                 for(auto ele : cfg->expand()) {
                     ++mJudgeCnt;
                     auto tester = system().instantiate<Tester>(id);

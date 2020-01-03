@@ -1,6 +1,5 @@
 #include "../Shared/Tester.hpp"
 #include "Common.hpp"
-#include <algorithm>
 #pragma warning(push, 0)
 #define GUID_DEFINED
 #include <rang.hpp>
@@ -40,7 +39,6 @@ public:
             CHECKSTATUS();
             mReason = splitAnswer(matcher.group(4, status));
             CHECKSTATUS();
-            std::sort(mReason.begin(), mReason.end());
             return id;
         }
         BUS_TRACE_END();
@@ -60,20 +58,8 @@ public:
                     auto ans = getAnswer(quit);
                     if(quit)
                         return -1;
-                    std::sort(ans.begin(), ans.end());
-                    if(ans != mReason) {
-                        std::cout << rang::fg::yellow << "标准原因/例子有：";
-                        for(auto rea : mReason)
-                            std::cout << rea << " ";
-                        std::cout << rang::fg::reset << std::endl;
-                        std::cout << "请手动判断T/F" << std::endl;
-                        bool match = getJudge(quit);
-                        return quit ? -1 : match;
-                    } else {
-                        std::cout << rang::fg::green << "完全正确"
-                                  << rang::fg::reset << std::endl;
-                        return 1;
-                    }
+                    res = compareAnswer(mReason, ans, quit);
+                    return quit ? -1 : res;
                 }
                 return 1;
             } else {
