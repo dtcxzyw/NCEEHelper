@@ -14,6 +14,7 @@ static void testImpl(std::shared_ptr<KnowledgeLibrary> klib,
             TestResult res = klib->test(id);
             if(res.result == -1)
                 return;
+            eng->recordTestResult(res);
         }
     }
     BUS_TRACE_END();

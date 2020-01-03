@@ -119,19 +119,29 @@ public:
             pass += x.second.passCnt, test += x.second.testCnt;
         std::stringstream ss;
         ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy:";
+        ss.precision(2);
         if(test)
-            ss << (static_cast<double>(pass) / test);
+            ss << std::fixed << (static_cast<double>(pass) / test) * 100.0
+               << "%";
         else
             ss << "N/A";
         return ss.str();
     }
     void recordTestResult(TestResult res) override {
-        if(!mOutput)
-            mOutput = std::make_unique<std::ofstream>(mOutputPath);
-        for(auto x : res.kpID) {
-            (*mOutput) << (res.result ? "T" : "F") << GUID2Str(x) << '\n';
+        BUS_TRACE_BEG() {
+            if(!mOutput) {
+                mOutput = std::make_unique<std::ofstream>(mOutputPath);
+                if(!mOutput->is_open())
+                    BUS_TRACE_THROW(
+                        std::runtime_error("Failed to save history. file=" +
+                                           mOutputPath.string()));
+            }
+            for(auto x : res.kpID) {
+                (*mOutput) << (res.result ? "T" : "F") << GUID2Str(x) << '\n';
+            }
+            mOutput->flush();
         }
-        mOutput->flush();
+        BUS_TRACE_END();
     }
 };
 

@@ -1,4 +1,5 @@
 #include "../Shared/Tester.hpp"
+#include "Common.hpp"
 
 BUS_MODULE_NAME("NCEEHelper.Builtin.FillTester");
 
@@ -8,12 +9,18 @@ public:
     explicit FillTester(Bus::ModuleInstance& instance) : Tester(instance) {}
     GUID init(std::shared_ptr<Config> cfg) override {
         BUS_TRACE_BEG() {
-            return {};
+            std::string desc = cfg->asString();
+            if(desc.size() <= 38)
+                BUS_TRACE_THROW(std::logic_error("Bad description"));
+            GUID id = str2GUID(desc.substr(0, 38));
+            desc = desc.substr(38);
+            String str(desc.c_str(), "utf8");
+            return id;
         }
         BUS_TRACE_END();
     }
-    bool test() override {
-        return false;
+    int test() override {
+        throw std::runtime_error("");
     }
 };
 

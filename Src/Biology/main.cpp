@@ -23,6 +23,7 @@ public:
                 str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), ""
             };
             // Fill.json
+            /*
             {
                 id.name = "JsonConfig";
                 auto cfg = system().instantiate<Config>(id);
@@ -40,6 +41,7 @@ public:
                     val.swap(tester);
                 }
             }
+            */
             // Judge.json
             {
                 id.name = "JsonConfig";

@@ -12,5 +12,5 @@ public:
     }
 
     virtual GUID init(std::shared_ptr<Config> cfg) = 0;
-    virtual bool test() = 0;
+    virtual int test() = 0;
 };

@@ -1,7 +1,7 @@
 #include "../Shared/Command.hpp"
 #pragma warning(push, 0)
-#include "../ThirdParty/Bus/BusSystem.hpp"
 #define GUID_DEFINED
+#include "../ThirdParty/Bus/BusSystem.hpp"
 #include <rang.hpp>
 #pragma warning(pop)
 #include <sstream>
@@ -30,8 +30,10 @@ static int mainImpl(int argc, char** argv, Bus::ModuleSystem& sys) {
 static Bus::ReportFunction colorOutput(std::ostream& out, rang::fg col,
                                        const std::string& pre,
                                        bool inDetail = false) {
-    return [&, pre](Bus::ReportLevel, const std::string& message,
-                    const Bus::SourceLocation& srcLoc) {
+    return [=, &out](Bus::ReportLevel, const std::string& message,
+                     const Bus::SourceLocation& srcLoc) {
+        if(srcLoc.module == std::string("BusSystem.MSVCDelayLoader"))
+            return;
         out << col;
         if(inDetail) {
             out << pre << ':' << message << std::endl;
@@ -74,7 +76,7 @@ static void nestedException(const T& exc, const std::string& lastModule) {
 
 static void processException(const std::exception& ex,
                              const std::string& lastModule) {
-    std::cerr << ex.what() << std::endl;
+    std::cerr << "Reason:" << ex.what() << std::endl;
     nestedException(ex, lastModule);
 }
 
@@ -146,6 +148,7 @@ int main(int argc, char** argv) {
             PROCEXC();
         });
         try {
+            Bus::addModuleSearchPath(fs::current_path() / "Shared", *reporter);
             sys.wrapBuiltin(getBuiltin);
             loadPlugins(sys);
             return mainImpl(argc, argv, sys);
