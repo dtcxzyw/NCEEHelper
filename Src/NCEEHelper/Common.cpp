@@ -13,20 +13,25 @@ BUS_MODULE_NAME("NCEEHelper.Common");
 
 std::vector<String> getAnswer(bool& quit) {
     BUS_TRACE_BEG() {
-        std::string line;
-        std::getline(std::cin, line);
-        if(line == "#quit") {
-            quit = true;
-            return {};
+        while(true) {
+            std::string line;
+            std::getline(std::cin, line);
+            if(line == "#quit") {
+                quit = true;
+                return {};
+            }
+            std::stringstream ss;
+            ss.str(line);
+            std::vector<String> res;
+            String one;
+            while(ss >> one)
+                res.emplace_back(one);
+            std::sort(res.begin(), res.end());
+            if(res.size())
+                return res;
+            else
+                std::cout << String("è¯·é”®å…¥å†…å®¹", "utf8") << std::endl;
         }
-        std::stringstream ss;
-        ss.str(line);
-        std::vector<String> res;
-        String one;
-        while(ss >> one)
-            res.emplace_back(one);
-        std::sort(res.begin(), res.end());
-        return res;
     }
     BUS_TRACE_END();
 }
@@ -68,23 +73,23 @@ bool getJudge(bool& quit) {
             ans.front() == "f"))
             return (ans.front() == "T" || ans.front() == "t");
         else
-            std::cout << "ÇëÊäÈëT/FÅÐ¶Ï" << std::endl;
+            std::cout << String("è¯·è¾“å…¥T/Fåˆ¤æ–­", "utf8") << std::endl;
     }
 }
 
 bool compareAnswer(const std::vector<String>& stdAns,
                    const std::vector<String>& usrAns, bool& quit) {
     if(usrAns != stdAns) {
-        std::cout << rang::fg::yellow << "±ê×¼Ô­Òò/Àý×ÓÓÐ£º";
+        std::cout << rang::fg::yellow << String("æ ‡å‡†åŽŸå› /ä¾‹å­æœ‰ï¼š", "utf8");
         for(auto rea : stdAns)
             std::cout << rea << " ";
         std::cout << rang::fg::reset << std::endl;
-        std::cout << "ÇëÊÖ¶¯ÅÐ¶ÏT/F" << std::endl;
+        std::cout << String("è¯·æ‰‹åŠ¨åˆ¤æ–­T/F", "utf8") << std::endl;
         bool match = getJudge(quit);
         return match;
     } else {
-        std::cout << rang::fg::green << "ÍêÈ«ÕýÈ·" << rang::fg::reset
-                  << std::endl;
+        std::cout << rang::fg::green << String("å®Œå…¨æ­£ç¡®", "utf8")
+                  << rang::fg::reset << std::endl;
         return true;
     }
 }

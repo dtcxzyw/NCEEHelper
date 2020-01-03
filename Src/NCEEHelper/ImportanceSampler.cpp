@@ -65,7 +65,7 @@ private:
             uint32_t pass = key.second.passCnt;
             uint32_t test = key.second.testCnt;
             // accuracy
-            sum += std::min(10.0, static_cast<double>(test + 1) / (pass + 1));
+            sum += std::min(20.0, static_cast<double>(test + 1) / (pass + 1));
             // new knowledge
             if(test == 0)
                 sum += 5.0;

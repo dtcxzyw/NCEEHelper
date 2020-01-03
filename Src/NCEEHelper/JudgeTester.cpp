@@ -45,16 +45,16 @@ public:
     }
     int test() override {
         BUS_TRACE_BEG() {
-            std::cout << "ÅÐ¶Ï£º" << mProblem << std::endl;
+            std::cout << String("åˆ¤æ–­ï¼š", "utf8") << mProblem << std::endl;
             bool quit = false;
             bool res = getJudge(quit);
             if(quit)
                 return -1;
             if(res == mAnswer) {
-                std::cout << rang::fg::green << "ÅÐ¶ÏÕýÈ·" << rang::fg::reset
-                          << std::endl;
+                std::cout << rang::fg::green << String("åˆ¤æ–­æ­£ç¡®", "utf8")
+                          << rang::fg::reset << std::endl;
                 if(mReason.size()) {
-                    std::cout << "Ô­Òò/Àý×ÓÎª£º" << std::endl;
+                    std::cout << String("åŽŸå› /ä¾‹å­ä¸ºï¼š", "utf8") << std::endl;
                     auto ans = getAnswer(quit);
                     if(quit)
                         return -1;
@@ -63,9 +63,9 @@ public:
                 }
                 return 1;
             } else {
-                std::cout << rang::fg::red << "ÕýÈ·´ð°¸Îª"
+                std::cout << rang::fg::red << String("æ­£ç¡®ç­”æ¡ˆä¸º", "utf8")
                           << (mAnswer ? "T" : "F") << std::endl;
-                std::cout << rang::fg::yellow << "Ô­Òò/Àý×ÓÓÐ£º";
+                std::cout << rang::fg::yellow << String("åŽŸå› /ä¾‹å­æœ‰ï¼š", "utf8");
                 for(auto rea : mReason)
                     std::cout << rea << " ";
                 std::cout << rang::fg::reset << std::endl;

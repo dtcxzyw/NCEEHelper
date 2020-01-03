@@ -61,17 +61,6 @@ public:
                 p.type = PieceType::Statement;
                 mPieces.emplace_back(p);
             }
-            std::cout << std::endl;
-            for(auto p : mPieces) {
-                if(p.type == PieceType::Fill) {
-                    std::cout << "@";
-                    for(auto ans : p.ans)
-                        std::cout << ans << "&";
-                    std::cout << "@";
-                } else
-                    std::cout << p.state;
-            }
-            std::cout << std::endl << std::endl;
             return id;
         }
         BUS_TRACE_END();
@@ -90,33 +79,33 @@ public:
                     if(cp.type == PieceType::Statement) {
                         std::cout << cp.state;
                     } else {
-                        if(i < j) {
+                        if(j < i) {
                             rang::fg col =
-                                (history[i] ? rang::fg::green : rang::fg::red);
+                                (history[j] ? rang::fg::green : rang::fg::red);
                             std::cout << col << "[";
-                            for(auto ans : cp.ans)
-                                std::cout << ans << " ";
+                            for(size_t k = 0; k < cp.ans.size(); ++k)
+                                std::cout << (k ? "," : "") << cp.ans[k];
                             std::cout << "]" << rang::fg::reset;
                         } else {
                             std::cout
-                                << (i > j ? rang::fg::reset : rang::fg::yellow)
-                                << "[          ]" << rang::fg::reset;
+                                << (j > i ? rang::fg::reset : rang::fg::yellow)
+                                << (j > i ? rang::bg::reset : rang::bg::yellow)
+                                << "[          ]" << rang::fg::reset
+                                << rang::bg::reset;
                         }
                     }
                 }
                 std::cout << std::endl;
 
                 bool quit = false;
-                while(true) {
-                    std::vector<String> ans = getAnswer(quit);
-                    if(quit)
-                        return -1;
-                    bool eq = compareAnswer(p.ans, ans, quit);
-                    res = res & eq;
-                    history[i] = eq;
-                    if(quit)
-                        return -1;
-                }
+                std::vector<String> ans = getAnswer(quit);
+                if(quit)
+                    return -1;
+                bool eq = compareAnswer(p.ans, ans, quit);
+                res = res & eq;
+                history[i] = eq;
+                if(quit)
+                    return -1;
             }
             return res;
         }
