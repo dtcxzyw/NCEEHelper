@@ -114,17 +114,26 @@ public:
         return iter->first;
     }
     std::string summary() override {
-        uint32_t pass = 0, test = 0;
-        for(auto&& x : mHistory)
+        uint32_t pass = 0, test = 0, coverage = 0, master = 0;
+        for(auto&& x : mHistory) {
             pass += x.second.passCnt, test += x.second.testCnt;
+            coverage += (x.second.testCnt > 0);
+            master += (x.second.testCnt >= 3 &&
+                       (x.second.testCnt * 0.8 <= x.second.passCnt));
+        }
         std::stringstream ss;
-        ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy:";
+        ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy: ";
         ss.precision(2);
         if(test)
             ss << std::fixed << (static_cast<double>(pass) / test) * 100.0
                << "%";
         else
             ss << "N/A";
+        ss << std::endl;
+        ss << "Coverage: " << (coverage * 100.0 / mHistory.size()) << "%"
+           << std::endl;
+        ss << "Master: " << (master * 100.0 / mHistory.size()) << "%"
+           << std::endl;
         return ss.str();
     }
     void recordTestResult(TestResult res) override {
