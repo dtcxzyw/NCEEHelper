@@ -96,7 +96,8 @@ public:
             mRNG.seed(Clock::now().time_since_epoch().count());
             std::stringstream ss;
             ss << std::hex << std::uppercase
-               << Clock::now().time_since_epoch().count() << ".log";
+               << std::chrono::system_clock::now().time_since_epoch().count()
+               << ".log";
             mOutputPath = history / ss.str();
         }
         BUS_TRACE_END();
