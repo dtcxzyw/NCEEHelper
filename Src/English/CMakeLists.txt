@@ -1,0 +1,7 @@
+cmake_minimum_required (VERSION 3.8)
+find_package(pybind11 CONFIG REQUIRED)
+aux_source_directory(. SOURCE)
+add_library (English SHARED ${SOURCE})
+target_link_libraries(English Bus)
+target_link_libraries(English pybind11::embed)
+install (TARGETS English RUNTIME DESTINATION Plugins/English)
