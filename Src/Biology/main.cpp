@@ -28,7 +28,8 @@ public:
                 id.name = "JsonConfig";
                 auto cfg = system().instantiate<Config>(id);
                 if(!cfg->load(dataBase / "Fill.json"))
-                    BUS_TRACE_THROW("Failed to load Fill.json");
+                    BUS_TRACE_THROW(
+                        std::runtime_error("Failed to load Fill.json"));
                 id.name = "FillTester";
                 for(auto ele : cfg->expand()) {
                     ++mFillCnt;
@@ -45,7 +46,7 @@ public:
                 id.name = "JsonConfig";
                 auto cfg = system().instantiate<Config>(id);
                 if(!cfg->load(dataBase / "Judge.json"))
-                    BUS_TRACE_THROW("Failed to load Judge.json");
+                    BUS_TRACE_THROW(std::runtime_error("Failed to load Judge.json"));
                 id.name = "JudgeTester";
                 for(auto ele : cfg->expand()) {
                     ++mJudgeCnt;
