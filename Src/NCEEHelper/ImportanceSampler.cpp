@@ -2,6 +2,7 @@
 #include <chrono>
 #include <fstream>
 #include <random>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 
@@ -10,8 +11,8 @@ using Clock = std::chrono::high_resolution_clock;
 BUS_MODULE_NAME("NCEEHelper.Builtin.ImportanceSampler");
 
 struct TestHistory final {
-    uint32_t passCnt, testCnt;
-    TestHistory() : passCnt(0), testCnt(0) {}
+    uint32_t passCnt, testCnt, lastHistory, lastTime;
+    TestHistory() : passCnt(0), testCnt(0), lastHistory(0), lastTime(0) {}
 };
 
 class ImportanceSampler final : public TestEngine {
@@ -21,9 +22,21 @@ private:
     std::mt19937_64 mRNG;
     std::unique_ptr<std::ofstream> mOutput;
     fs::path mOutputPath;
+    uint64_t mCurrent;
     void loadRecord(const fs::path& historyFile) {
         BUS_TRACE_BEG() {
             std::ifstream in(historyFile);
+            std::stringstream ss;
+            ss << historyFile.stem().string();
+            uint64_t t;
+            ss >> std::uppercase >> std::hex >> t;
+            constexpr uint64_t perDay =
+                86400 * std::chrono::system_clock::period::den;
+            uint32_t day = static_cast<uint32_t>((mCurrent - t) / perDay) + 1U;
+            reporter().apply(ReportLevel::Info,
+                             "Loading history " + ss.str() + " (" +
+                                 std::to_string(day) + " days ago)",
+                             BUS_DEFSRCLOC());
             std::string line;
             size_t lineCnt = 0;
             while(std::getline(in, line)) {
@@ -50,8 +63,12 @@ private:
                     FAIL();
                 auto iter = mHistory.find(guid);
                 if(iter != mHistory.end()) {
-                    iter->second.passCnt += res;
-                    ++iter->second.testCnt;
+                    TestHistory& his = iter->second;
+                    his.passCnt += res;
+                    ++his.testCnt;
+                    his.lastHistory =
+                        ((his.lastHistory << 1) | static_cast<uint32_t>(res));
+                    his.lastTime = day;
                 }
             }
         }
@@ -62,14 +79,19 @@ private:
         double sum = 0.0;
         size_t idx = 0;
         for(auto key : mHistory) {
-            uint32_t pass = key.second.passCnt;
-            uint32_t test = key.second.testCnt;
-            // accuracy
-            sum += std::min(20.0, static_cast<double>(test + 1) / (pass + 1));
-            // new knowledge
-            if(test == 0)
-                sum += 5.0;
-            // TODO:time,forget
+            TestHistory& his = key.second;
+            // accuracy 60%
+            double weight = std::min(
+                60.0, static_cast<double>(his.testCnt + 1) / (his.passCnt + 1));
+            // new knowledge 10%
+            if(his.testCnt <= 3)
+                weight += 10.0 - his.testCnt * 3;
+            // time 10%
+            weight += std::min(his.lastTime, 20U) * 0.5;
+            // forget 20%
+            if((his.lastHistory & 1) == 0)
+                weight += 20.0;
+            sum += weight;
             mAccBuffer[idx].first = key.first;
             mAccBuffer[idx].second = sum;
             ++idx;
@@ -85,19 +107,26 @@ public:
                 BUS_TRACE_THROW(std::logic_error("No knowledge point!!!"));
             for(auto id : table)
                 mHistory[id] = {};
+            std::set<fs::path> logs;
             for(auto p : fs::directory_iterator(history)) {
                 if(p.is_regular_file()) {
                     auto path = p.path();
                     if(path.extension() == ".log")
-                        loadRecord(path);
+                        logs.emplace(path);
                 }
             }
+            mCurrent =
+                std::chrono::system_clock::now().time_since_epoch().count();
+            std::stringstream ss;
+            ss << std::hex << std::uppercase << mCurrent;
+            reporter().apply(ReportLevel::Info, "Timestamp " + ss.str(),
+                             BUS_DEFSRCLOC());
+            for(auto log : logs)
+                loadRecord(log);
+
             buildAccBuffer();
             mRNG.seed(Clock::now().time_since_epoch().count());
-            std::stringstream ss;
-            ss << std::hex << std::uppercase
-               << std::chrono::system_clock::now().time_since_epoch().count()
-               << ".log";
+            ss << ".log";
             mOutputPath = history / ss.str();
         }
         BUS_TRACE_END();
@@ -119,8 +148,7 @@ public:
         for(auto&& x : mHistory) {
             pass += x.second.passCnt, test += x.second.testCnt;
             coverage += (x.second.testCnt > 0);
-            master += (x.second.testCnt >= 3 &&
-                       (x.second.testCnt * 0.8 <= x.second.passCnt));
+            master += ((x.second.lastHistory & 7U) == 7U);
         }
         std::stringstream ss;
         ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy: ";
@@ -131,10 +159,10 @@ public:
         else
             ss << "N/A";
         ss << std::endl;
-        ss << "Coverage: " << (coverage * 100.0 / mHistory.size()) << "%"
-           << std::endl;
-        ss << "Master: " << (master * 100.0 / mHistory.size()) << "%"
-           << std::endl;
+        ss << "Coverage: " << (coverage * 100.0 / mHistory.size()) << "% ("
+           << coverage << "/" << mHistory.size() << ")" << std::endl;
+        ss << "Master: " << (master * 100.0 / mHistory.size()) << "% ("
+           << master << "/" << mHistory.size() << ")" << std::endl;
         return ss.str();
     }
     void recordTestResult(TestResult res) override {
