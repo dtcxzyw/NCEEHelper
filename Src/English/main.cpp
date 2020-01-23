@@ -257,18 +257,19 @@ public:
 
             WordLUT lut{ dataPath };
             static const char* prefix[] = {
-                "a",     "ante",  "be",    "co",    "de",   "demi",  "dis",
-                "en",    "ex",    "extra", "hyper", "hypo", "in",    "infra",
-                "inter", "intra", "mis",   "non",   "off",  "oft",   "out",
-                "over",  "para",  "post",  "pre",   "pro",  "re",    "retro",
-                "semi",  "sub",   "trans", "ultra", "un",   "under", "up"
+                "a",     "ab",  "ap",    "ante",  "be",    "co",    "de",
+                "demi",  "dis", "en",    "ex",    "extra", "hyper", "hypo",
+                "in",    "im",  "ir",    "infra", "inter", "intra", "mis",
+                "non",   "off", "oft",   "out",   "over",  "para",  "post",
+                "pre",   "pro", "re",    "retro", "semi",  "sub",   "trans",
+                "ultra", "un",  "under", "up"
             };
             static const char* suffix[] = {
-                "able", "age",  "al",   "ance",  "arian", "ary",  "dom",
-                "ee",   "er",   "ese",  "esque", "ess",   "fold", "ful",
-                "hood", "ify",  "ion",  "ish",   "ism",   "ist",  "ista",
-                "ite",  "itis", "ize",  "less",  "let",   "ling", "ly",
-                "ment", "most", "ness", "oid",   "or",    "ous",  "ship"
+                "able", "age", "al",   "ance", "arian", "ary", "cy",   "dom",
+                "ed",   "ee",  "er",   "ese",  "esque", "ess", "fold", "ful",
+                "hood", "ify", "ion",  "ish",  "ism",   "ist", "ista", "ite",
+                "itis", "ize", "less", "let",  "ling",  "ly",  "ment", "most",
+                "ness", "oid", "or",   "ous",  "ship"
             };
 
             BUS_TRACE_POINT();
