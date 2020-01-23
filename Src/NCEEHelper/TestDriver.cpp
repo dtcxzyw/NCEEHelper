@@ -36,9 +36,15 @@ public:
             config->load("TestConfig.json");
             fs::path historyRoot = config->attribute("History")->asString();
             fs::path dataBaseRoot = config->attribute("DataBase")->asString();
-            klib->load(dataBaseRoot / (argv[1]));
+            klib->load(dataBaseRoot);
             std::cout << klib->summary() << std::endl;
-            eng->init(historyRoot / (argv[2]) / (argv[1]), klib->getTable());
+            fs::path hisPath = historyRoot;
+            fs::create_directory(hisPath);
+            hisPath /= argv[2];
+            fs::create_directory(hisPath);
+            hisPath /= argv[1];
+            fs::create_directory(hisPath);
+            eng->init(hisPath, klib->getTable());
             std::cout << eng->summary() << std::endl;
             testImpl(klib, eng);
             return EXIT_SUCCESS;

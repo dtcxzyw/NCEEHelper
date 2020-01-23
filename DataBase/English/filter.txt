@@ -1,0 +1,5 @@
+select * from stardict where ((not ((tag like '%zk%') or (tag like '%gk%') or (oxford is not null) or ((frq is not null) and frq > 0))) or (tag is null))
+
+frq is null
+(translation like '%[%]%')
+(word like '-%')

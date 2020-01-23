@@ -19,7 +19,7 @@ public:
     void load(const fs::path& dataBase) {
         BUS_TRACE_BEG() {
             mFillCnt = mJudgeCnt = 0;
-            mDataBase = dataBase;
+            mDataBase = dataBase / "Biology";
             Bus::FunctionId id{
                 str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), ""
             };
@@ -27,7 +27,7 @@ public:
             {
                 id.name = "JsonConfig";
                 auto cfg = system().instantiate<Config>(id);
-                if(!cfg->load(dataBase / "Fill.json"))
+                if(!cfg->load(mDataBase / "Fill.json"))
                     BUS_TRACE_THROW(
                         std::runtime_error("Failed to load Fill.json"));
                 id.name = "FillTester";
@@ -45,8 +45,9 @@ public:
             {
                 id.name = "JsonConfig";
                 auto cfg = system().instantiate<Config>(id);
-                if(!cfg->load(dataBase / "Judge.json"))
-                    BUS_TRACE_THROW(std::runtime_error("Failed to load Judge.json"));
+                if(!cfg->load(mDataBase / "Judge.json"))
+                    BUS_TRACE_THROW(
+                        std::runtime_error("Failed to load Judge.json"));
                 id.name = "JudgeTester";
                 for(auto ele : cfg->expand()) {
                     ++mJudgeCnt;
