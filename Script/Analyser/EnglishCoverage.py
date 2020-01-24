@@ -77,30 +77,41 @@ def getWordnetPos(treebank_tag):
         return nltk.corpus.wordnet.NOUN
 
 
-def countFile(file, words):
+def countFile(file, wordDict):
+    hit = 0
+    miss = 0
     with open(file, encoding="utf-8") as f:
         sens = sen_tokenizer.tokenize(f.read())
         for sen in sens:
             ws = nltk.pos_tag(word_tokenize(filter(sen).lower()))
             for word in ws:
-                pos = getWordnetPos(word[1])
-                words.append(lemmatize(word[0], pos))
+                wt = word[0]
+                if wt in wordDict:
+                    hit += 1
+                else:
+                    pos = getWordnetPos(word[1])
+                    lwt = lemmatize(wt, pos)
+                    if lwt in wordDict:
+                        hit += 1
+                    else:
+                        miss += 1
+    return (hit, miss)
 
 
 def count(wordDict, dirs):
-    words = []
+    hit = 0
+    miss = 0
     cnt = 0
     for d in dirs:
         for r, sd, files in os.walk(d):
             for f in files:
                 cnt = cnt+1
                 print("{} {}".format(cnt, f))
-                countFile(r+f, words)
-    dist = nltk.FreqDist(words)
-    out = open("./Output/english.txt", "w")
-    for (word, freq) in dist.most_common():
-        if len(word) > 2 and word not in wordDict:
-            out.write("{} {}\n".format(word, freq))
+                nh, nm = countFile(r+f, wordDict)
+                hit += nh
+                miss += nm
+    print("hit {} miss {}".format(hit, miss))
+    print("coverage {}%".format(hit*100.0/(hit+miss+1)))
 
 
 if __name__ == '__main__':

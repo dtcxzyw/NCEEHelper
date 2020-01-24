@@ -1,9 +1,13 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import ReaderDigest
 import GuangMing
 import People
 import XinHua
 
-rdu = ReaderDigest.searchMain()
+# ReaderDigest.searchMain()
+rdu = 0
 gmu = GuangMing.searchMain()
 pu = People.searchMain()
 xhu = XinHua.searchMain()
