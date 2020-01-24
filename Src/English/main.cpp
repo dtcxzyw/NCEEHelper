@@ -257,19 +257,24 @@ public:
 
             WordLUT lut{ dataPath };
             static const char* prefix[] = {
-                "a",     "ab",  "ap",    "ante",  "be",    "co",    "de",
-                "demi",  "dis", "en",    "ex",    "extra", "hyper", "hypo",
-                "in",    "im",  "ir",    "infra", "inter", "intra", "mis",
-                "non",   "off", "oft",   "out",   "over",  "para",  "post",
-                "pre",   "pro", "re",    "retro", "semi",  "sub",   "trans",
-                "ultra", "un",  "under", "up"
+                "a",     "ab",   "ap",    "ante",  "anti",  "auto",  "be",
+                "bi",    "co",   "de",    "demi",  "dis",   "en",    "ex",
+                "extra", "fore", "mid",   "post",  "hyper", "hypo",  "in",
+                "im",    "ir",   "il",    "infra", "inter", "intra", "mis",
+                "mono",  "non",  "off",   "oft",   "out",   "over",  "para",
+                "post",  "pre",  "pro",   "poly",  "re",    "retro", "semi",
+                "sub",   "sur",  "trans", "ultra", "un",    "under", "up"
             };
             static const char* suffix[] = {
-                "able", "age", "al",   "ance", "arian", "ary", "cy",   "dom",
-                "ed",   "ee",  "er",   "ese",  "esque", "ess", "fold", "ful",
-                "hood", "ify", "ion",  "ish",  "ism",   "ist", "ista", "ite",
-                "itis", "ize", "less", "let",  "ling",  "ly",  "ment", "most",
-                "ness", "oid", "or",   "ous",  "ship"
+                "able", "age",   "al",    "ance",   "ant",  "ate",  "arian",
+                "ary",  "ation", "cy",    "cation", "dom",  "ed",   "ee",
+                "er",   "ese",   "esque", "ess",    "ency", "en",   "ence",
+                "ety",  "fold",  "ful",   "hood",   "ics",  "ial",  "ical",
+                "ify",  "ing",   "ion",   "ish",    "ism",  "ist",  "ista",
+                "ite",  "itis",  "ize",   "ive",    "ity",  "less", "let",
+                "ling", "logy",  "ly",    "ment",   "most", "ness", "oid",
+                "or",   "ory",   "ous",   "ship",   "t",    "ty",   "th",
+                "ward", "wise",  "y",     "ure",    "ze"
             };
 
             BUS_TRACE_POINT();
@@ -367,15 +372,45 @@ public:
                         py::print("{} -  -{}  -> {}"_s.format(word, suf,
                                                               py::str(drv)));
                 }
-                if(sw.back() == 'e') {
-                    sw.pop_back();
+                std::string old = sw;
+                fixTail(sw);
+                if(sw != old) {
                     for(auto suf : suffix) {
                         std::string drv = sw + suf;
                         if(lut.count(drv))
-                            py::print("{} -  -e -{}  -> {}"_s.format(
+                            py::print("@ {} - -{}  -> {}"_s.format(
                                 word, suf, py::str(drv)));
                     }
                 }
+                //末尾修改派生词
+                sw = old;
+                // ial,ious->iety
+                auto checkTail = [&](const std::string& ot,
+                                     const std::string& nt) {
+                    if(sw.size() > ot.size() &&
+                       sw.substr(sw.size() - ot.size()) == ot) {
+                        std ::string drv =
+                            sw.substr(0, sw.size() - ot.size()) + nt;
+                        if(lut.count(drv))
+                            py::print("# {} -{}-{}-> {}"_s.format(
+                                word, py::str(ot), py::str(nt), py::str(drv)));
+                    }
+                };
+                checkTail("al", "ety");
+                checkTail("ous", "ety");
+                checkTail("ble", "bility");
+                checkTail("t", "cy");
+                checkTail("te", "cy");
+                checkTail("e", "");
+                checkTail("t", "ssion");
+                checkTail("ve", "f");
+                checkTail("d", "se");
+                checkTail("d", "sion");
+                checkTail("de", "sion");
+                checkTail("fy", "fication");
+                checkTail("e", "ption");
+                checkTail("ve", "ption");
+                checkTail("be", "ption");
             }
         }
         BUS_TRACE_END();
@@ -407,7 +442,6 @@ public:
         : Bus::ModuleInstance(path, sys), mInterpreter(true) {
         py::print("Hello Pybind11");
         py::print(py::module::import("sys").attr("version"));
-        py::print(py::module::import("sys").attr("executable"));
     }
     Bus::ModuleInfo info() const override {
         Bus::ModuleInfo res;

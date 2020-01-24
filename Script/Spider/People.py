@@ -11,39 +11,59 @@ base = 'http://opinion.people.com.cn'
 output = './Output/People'
 count = 0
 cache = 0
+vaild = 0
+
+blacklist = {u"小蒋的话：", u"相关评论"}
+
+
+def dfsWrite(out, blk):
+    if blk.string == None or blk.string.strip() == "":
+        if hasattr(blk, "children"):
+            for sub in blk.children:
+                if sub == '\n':
+                    out.write('\n')
+                elif not dfsWrite(out, sub):
+                    return False
+        return True
+    else:
+        text = blk.string
+        st = text.strip()
+        if st in blacklist:
+            return False
+        else:
+            out.write(text)
+            return True
 
 
 def getContent(name, url):
-    time.sleep(0.05)
     global count
+    global vaild
     count = count + 1
     filename = output+name
     if os.path.exists(filename):
         print("use cache {}".format(name))
         global cache
         cache = cache + 1
+        vaild = vaild+1
         return
+    time.sleep(0.05)
     text = requests.get(
         url).content.decode("gbk")
     soup = BeautifulSoup(text, "lxml")
     blk = soup.select_one('div[class="box_con"]')
+    if blk == None:
+        return
     out = open(filename, "w", encoding='utf-8')
-    print("{} -> {}".format(url, name))
     out.write(soup.find("h1").string)
-    for par in blk.select("p"):
-        text = par.string
-        if text == None:
-            text = ""
-            for npar in par.children:
-                if npar.string != None:
-                    text = text+npar.string
-        if text.strip() == u"相关评论":
-            break
-        out.write(text)
+
+    dfsWrite(out, blk)
+    print("{} -> {}".format(url, name))
+    vaild = vaild+1
 
 
 def searchIndex(address):
     print('-------')
+    time.sleep(0.1)
     text = requests.get(address).content.decode("gbk")
 
     soup = BeautifulSoup(text, "lxml")
@@ -54,8 +74,8 @@ def searchIndex(address):
         for url in urls:
             tmp = url.select_one('a')
             title = tmp.string
-            time = url.select_one('i').string
-            name = title + " "+time
+            t = url.select_one('i').string
+            name = title + " "+t
             print(name)
             url = base+tmp['href']
             pos1 = url.rfind('/')
@@ -79,10 +99,21 @@ def searchIter(id):
         address = searchIndex(address)
 
 
-searchIter(159301)
-searchIter(1034)
-searchIter(51863)
-searchIter(364183)
-searchIter(51854)
+def searchMain():
+    global count
+    count = 0
+    global cache
+    cache = 0
+    global vaild
+    vaild = 0
+    searchIter(159301)
+    searchIter(1034)
+    searchIter(51863)
+    searchIter(364183)
+    searchIter(51854)
 
-print("count {} cache {}".format(count, cache))
+    print("count {} cache {} vaild {}".format(count, cache, vaild))
+
+
+if __name__ == '__main__':
+    searchMain()
