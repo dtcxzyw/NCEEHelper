@@ -1,23 +1,21 @@
 #!/usr/bin/python2.6
 # -*- coding: utf-8 -*-
 
-import random
 import time
 import re
 from bs4 import BeautifulSoup
+import random
 import requests
 import os
 
-base = "http://www.xinhuanet.com"
-# TODO：http://www.news.cn/comments/index.htm
-
-output = './Output/XinHua'
+base = 'http://rd.com'
+output = './Output/ReaderDigest/'
 count = 0
 cache = 0
 vaild = 0
 new = 0
 
-blacklist = {"+1"}
+blacklist = {}
 
 agents = [
     "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0",
@@ -32,12 +30,15 @@ agents = [
 
 
 def getHtml(address):
-    time.sleep(1.0)
+    time.sleep(0.05)
     header = {"User-Agent": random.choice(agents)}
-    return requests.get(address, headers=header)
+    return requests.get(address, headers=header).content.decode("UTF-8")
 
 
 def dfsWrite(out, blk):
+    if hasattr(blk, "name"):
+        if blk.name == 'script':
+            return True
     if blk.string == None or blk.string.strip() == "":
         if hasattr(blk, "children"):
             for sub in blk.children:
@@ -52,7 +53,8 @@ def dfsWrite(out, blk):
         if st in blacklist:
             return False
         else:
-            out.write(text)
+            if text.strip() != "View as slideshow":
+                out.write(text)
             return True
 
 
@@ -65,42 +67,50 @@ def getContent(name, url):
         print("use cache {}".format(name))
         global cache
         cache = cache + 1
-        vaild = vaild + 1
+        vaild = vaild+1
         return
-    text = getHtml(url).content.decode("utf-8")
+    text = getHtml(url)
     soup = BeautifulSoup(text, "lxml")
-    blk = soup.select_one('div[id="p-detail"]')
-    if blk == None:
+    blks = soup.select_one('div[class="entry-content"]')
+    if blks == None:
+        print("invalid article {}".format(url))
         return
     out = open(filename, "w", encoding='utf-8')
-    dfsWrite(out, soup.select_one('div[class="h-title"]'))
-    dfsWrite(out, blk)
+
+    dfsWrite(out, blks)
+
     print("{} -> {}".format(url, name))
     vaild = vaild+1
     global new
     new = new+1
 
 
-def searchIndex(address):
-    text = getHtml(address).content.decode("utf-8")
-    soup = BeautifulSoup(text, "lxml")
-    blks = soup.select('div[id="hideData3"]')
-
-    for blk in blks:
-        urls = blk.select('li')
-        for url in urls:
-            tmp = url.select_one('a')
-            title = tmp.string
-            t = url.select_one('span').string
-            name = title + " "+t
-            print(name)
-            url = tmp['href']
-            pos1 = url.rfind('/')
-            pos2 = url.rfind(".")
-            getContent(url[pos1:pos2]+".txt", url)
-            print('------')
-        # 不要今日关注
+def getContentUrl(url):
+    pos = len("https://www.rd.com/true-stories/")
+    name = url[pos:-1]
+    if name.find("page/") == 0:
         return
+    getContent(name.replace("/", "-")+".txt", url)
+    print('------')
+
+
+def searchIndex(address):
+    print('-------')
+    text = getHtml(address)
+
+    soup = BeautifulSoup(text, "lxml")
+
+    blks = soup.select_one('div[class="site-inner"]')
+
+    for blk in blks.select('a'):
+        url = blk['href']
+        if url.find("www.rd.com/true-stories/") != -1 and url.count("/") >= 6:
+            getContentUrl(url)
+
+    nxt = soup.select_one('a[class="next page-numbers"]')
+    if nxt != None:
+        nxt = nxt['href']
+    return nxt
 
 
 def searchMain():
@@ -112,7 +122,10 @@ def searchMain():
     vaild = 0
     global new
     new = 0
-    searchIndex(base+"/xhsd/index.htm")
+
+    url = base+"/true-stories/"
+    while url != None:
+        url = searchIndex(url)
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
     return new

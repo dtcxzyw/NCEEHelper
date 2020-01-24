@@ -12,6 +12,7 @@ output = './Output/People'
 count = 0
 cache = 0
 vaild = 0
+new = 0
 
 blacklist = {u"小蒋的话：", u"相关评论"}
 
@@ -59,6 +60,8 @@ def getContent(name, url):
     dfsWrite(out, blk)
     print("{} -> {}".format(url, name))
     vaild = vaild+1
+    global new
+    new = new+1
 
 
 def searchIndex(address):
@@ -106,13 +109,16 @@ def searchMain():
     cache = 0
     global vaild
     vaild = 0
+    global new
+    new = 0
     searchIter(159301)
     searchIter(1034)
     searchIter(51863)
     searchIter(364183)
     searchIter(51854)
 
-    print("count {} cache {} vaild {}".format(count, cache, vaild))
+    print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
+    return new
 
 
 if __name__ == '__main__':

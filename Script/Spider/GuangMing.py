@@ -13,6 +13,7 @@ output = './Output/GuangMing'
 count = 0
 cache = 0
 vaild = 0
+new = 0
 
 blacklist = {u"责编", u"（转载请注明来源“光明网”，作者“光明网评论员”）"}
 
@@ -29,7 +30,7 @@ agents = [
 
 
 def getHtml(address):
-    time.sleep(1.0)
+    time.sleep(0.05)
     header = {"User-Agent": random.choice(agents)}
     return requests.get(address, headers=header).content.decode("UTF-8")
 
@@ -49,7 +50,8 @@ def dfsWrite(out, blk):
         if st in blacklist:
             return False
         else:
-            out.write(text)
+            if text.find(u'责编') == -1 and text.find(u'责任编辑') == -1:
+                out.write(text)
             return True
 
 
@@ -68,6 +70,9 @@ def getContent(name, url):
     soup = BeautifulSoup(text, "lxml")
     blks = soup.select_one('div[class="u-mainText"]')
     if blks == None:
+        blks = soup.select_one('div[id="contentMain"]')
+    if blks == None:
+        print("invalid article {}".format(url))
         return
     out = open(filename, "w", encoding='utf-8')
     out.write(soup.find("h1").string)
@@ -80,9 +85,13 @@ def getContent(name, url):
             break
     print("{} -> {}".format(url, name))
     vaild = vaild+1
+    global new
+    new = new+1
 
 
 def getContentUrl(url):
+    if url.find('http') == -1:
+        url = base+"/"+url
     pos1 = url.rfind('/')
     pos2 = url.rfind(".")
     getContent(url[pos1:pos2]+".txt", url)
@@ -100,9 +109,7 @@ def searchIndex(address, id):
         for art in blks.select('a'):
             url = art['href']
             if url.find('content_') != -1:
-                if url.find('http') == -1:
-                    url = base+"/"+url
-                elif url.find("guancha.gmw.cn") == -1:
+                if url.find("guancha.gmw.cn") == -1:
                     # 防止跳出
                     continue
                 print("Title:", art.string)
@@ -118,8 +125,7 @@ def searchIndex(address, id):
             t = url.select_one('span[class="channel-newsTime"]').string
             name = title + " "+t
             print(name)
-            url = base+"/"+tmp['href']
-            getContentUrl(url)
+            getContentUrl(tmp['href'])
 
     nxt = None
     for blk in soup.select("a"):
@@ -144,11 +150,14 @@ def searchMain():
     cache = 0
     global vaild
     vaild = 0
+    global new
+    new = 0
     searchIter(11273)
     searchIter(26275)
     searchIter(87838)
 
-    print("count {} cache {} vaild {}".format(count, cache, vaild))
+    print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
+    return new
 
 
 if __name__ == '__main__':

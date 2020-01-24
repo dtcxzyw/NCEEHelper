@@ -36,3 +36,4 @@
 /Build
 /DataBase/English/ECDICTData
 /Script/Spider/Output
+*.pyc
