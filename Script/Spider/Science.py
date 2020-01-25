@@ -115,7 +115,7 @@ def searchMain():
     global new
     new = 0
 
-    searchYear(2019)
+    # searchYear(2019)
     searchYear(2020)
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))

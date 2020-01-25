@@ -12,6 +12,7 @@ BUS_MODULE_NAME("NCEEHelper.Builtin.ImportanceSampler");
 
 struct TestHistory final {
     uint32_t passCnt, testCnt, lastHistory, lastTime;
+    double weight;
     TestHistory() : passCnt(0), testCnt(0), lastHistory(0), lastTime(0) {}
 };
 
@@ -78,11 +79,13 @@ private:
         mAccBuffer.resize(mHistory.size());
         double sum = 0.0;
         size_t idx = 0;
-        for(auto key : mHistory) {
+        for(auto& key : mHistory) {
             TestHistory& his = key.second;
             // accuracy 60%
-            double weight = std::min(
-                60.0, static_cast<double>(his.testCnt + 1) / (his.passCnt + 1));
+            double weight = 6.0 *
+                std::min(10.0,
+                         static_cast<double>(his.testCnt + 1) /
+                             (his.passCnt + 1));
             // new knowledge 10%
             if(his.testCnt <= 3)
                 weight += 10.0 - his.testCnt * 3;
@@ -91,6 +94,7 @@ private:
             // forget 20%
             if((his.lastHistory & 1) == 0)
                 weight += 20.0;
+            his.weight = weight;
             sum += weight;
             mAccBuffer[idx].first = key.first;
             mAccBuffer[idx].second = sum;
@@ -139,16 +143,19 @@ public:
                                      [](const auto& lhs, const auto& rhs) {
                                          return lhs.second < rhs.second;
                                      });
-        if(iter == mAccBuffer.end())
-            return mAccBuffer.back().first;
-        return iter->first;
+        GUID res =
+            (iter == mAccBuffer.end() ? mAccBuffer.back().first : iter->first);
+        std::cout << "Weight:" << mHistory[res].weight << std::endl;
+        return res;
     }
     std::string summary() override {
         uint32_t pass = 0, test = 0, coverage = 0, master = 0;
+        std::vector<std::pair<double, GUID>> top;
         for(auto&& x : mHistory) {
             pass += x.second.passCnt, test += x.second.testCnt;
             coverage += (x.second.testCnt > 0);
             master += ((x.second.lastHistory & 7U) == 7U);
+            top.push_back(std::make_pair(x.second.weight, x.first));
         }
         std::stringstream ss;
         ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy: ";
@@ -163,6 +170,12 @@ public:
            << coverage << "/" << mHistory.size() << ")" << std::endl;
         ss << "Master: " << (master * 100.0 / mHistory.size()) << "% ("
            << master << "/" << mHistory.size() << ")" << std::endl;
+        std::sort(top.rbegin(), top.rend());
+        ss << "Top 10" << std::endl;
+        size_t msiz = std::min(10ULL, top.size());
+        for(size_t i = 0; i < msiz; ++i)
+            ss << GUID2Str(top[i].second) << " " << top[i].first << std::endl;
+
         return ss.str();
     }
     void recordTestResult(TestResult res) override {

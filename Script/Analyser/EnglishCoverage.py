@@ -11,7 +11,8 @@ import re
 import os
 import ReadWordDict
 import Lemmatizer
-import threading
+import time
+from multiprocessing import Pool
 
 # patterns that used to find or/and replace particular chars or words
 # to find chars that are not a letter, a blank or a quotation
@@ -78,49 +79,82 @@ def getWordnetPos(treebank_tag):
         return nltk.corpus.wordnet.NOUN
 
 
-def countFile(file, wordDict, stdDict):
+wordDict = ReadWordDict.Dict(
+    "../../DataBase/English/ECDICTData/readword.db").dumps()
+stdDict = ReadWordDict.Dict(
+    "../../DataBase/English/ECDICTData/stardict.db").dumps()
+
+
+def countFile(file):
+    global wordDict
+    global stdDict
     hit = 0
     miss = 0
+    stra = set()
+    fima = set()
     with open(file, encoding="utf-8") as f:
         sens = sen_tokenizer.tokenize(f.read())
         for sen in sens:
             ws = nltk.pos_tag(word_tokenize(filter(sen).lower()))
             for word in ws:
                 wt = word[0]
-                wt = wt[0].lower()+wt[1:]
-                if not (wt.islower() and wt.isalpha()):
+                if len(wt) <= 3:
                     continue
                 if wt in wordDict:
-                    hit += 1
+                    if wt not in fima:
+                        fima.add(wt)
+                        hit += 1
                 else:
                     pos = getWordnetPos(word[1])
                     lwt = lemmatize(wt, pos)
                     if lwt in wordDict:
-                        hit += 1
-                    elif lwt in stdDict:
+                        if lwt not in fima:
+                            fima.add(lwt)
+                            hit += 1
+                    elif lwt in stdDict and lwt not in stra:
                         miss += 1
+                        stra.add(lwt)
 
-    return (hit, miss)
+    return (hit, miss, stra)
 
 
-def count(wordDict, stdDict, dirs):
+def count(dirs):
     hit = 0
     miss = 0
-    cnt = 0
+    tasks = []
     for d in dirs:
         for r, sd, files in os.walk(d):
             for f in files:
-                cnt = cnt+1
-                print("{} {}".format(cnt, f))
-                nh, nm = countFile(r+f, wordDict, stdDict)
-                hit += nh
-                miss += nm
+                tasks.append(r+f)
+
+    tot = len(tasks)
+    cnt = 0
+
+    stra = []
+
+    with Pool(processes=8) as pool:
+        for nh, nm, nstra in pool.imap_unordered(countFile, tasks):
+            hit += nh
+            miss += nm
+            cnt += 1
+            for word in nstra:
+                stra.append(word)
+            print("hit {} miss {}".format(hit, miss))
+            print("coverage {:.2f}%".format(hit*100.0/(hit+miss+1)))
+            print("process {:.2f}%".format(cnt*100.0/tot))
+
+    print("Done")
     print("hit {} miss {}".format(hit, miss))
     print("coverage {}%".format(hit*100.0/(hit+miss+1)))
 
+    stopwords = [line.strip() for line in open(
+        "Input/ensw.txt", encoding="utf-8").readlines()]
+
+    with open("./Output/english.txt", "w", encoding="utf-8") as out:
+        for (word, freq) in nltk.FreqDist(stra).most_common(1000):
+            if word not in stopwords:
+                out.write("{} {}\n".format(word, freq))
+
 
 if __name__ == '__main__':
-    rd = ReadWordDict.Dict("../../DataBase/English/ECDICTData/readword.db")
-    stdrd = ReadWordDict.Dict("../../DataBase/English/ECDICTData/stardict.db")
-    count(rd.dumps(), stdrd.dumps(), {'../Spider/Output/ReaderDigest/',
-                                      '../Spider/Output/Science/'})
+    count({'../Spider/Output/ReaderDigest/', '../Spider/Output/Science/'})
