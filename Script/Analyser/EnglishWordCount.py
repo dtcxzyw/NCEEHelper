@@ -83,11 +83,16 @@ def countFile(file, words):
         for sen in sens:
             ws = nltk.pos_tag(word_tokenize(filter(sen).lower()))
             for word in ws:
+                wt = word[0]
+                wt = wt[0].lower()+wt[1:]
+                if not (wt.islower() and wt.isalpha()):
+                    continue
                 pos = getWordnetPos(word[1])
-                words.append(lemmatize(word[0], pos))
+                lwt = lemmatize(wt, pos)
+                words.append(lwt)
 
 
-def count(wordDict, dirs):
+def count(wordDict, stdDict, dirs):
     words = []
     cnt = 0
     for d in dirs:
@@ -99,10 +104,12 @@ def count(wordDict, dirs):
     dist = nltk.FreqDist(words)
     out = open("./Output/english.txt", "w")
     for (word, freq) in dist.most_common():
-        if len(word) > 2 and word not in wordDict:
+        if len(word) > 2 and word not in wordDict and word in stdDict:
             out.write("{} {}\n".format(word, freq))
 
 
 if __name__ == '__main__':
     rd = ReadWordDict.Dict("../../DataBase/English/ECDICTData/readword.db")
-    count(rd.dumps(), {'../Spider/Output/ReaderDigest/'})
+    stdrd = ReadWordDict.Dict("../../DataBase/English/ECDICTData/stardict.db")
+    count(rd.dumps(), stdrd.dumps(), {'../Spider/Output/ReaderDigest/',
+                                      '../Spider/Output/Science/'})

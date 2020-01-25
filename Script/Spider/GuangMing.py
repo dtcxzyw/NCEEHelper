@@ -140,7 +140,10 @@ def searchIter(id):
     address = base+"/node_"+str(id)+".htm"
     print("begin with {}".format(address))
     while address != None:
+        old = new
         address = searchIndex(address, id)
+        if old == new:
+            break
 
 
 def searchMain():

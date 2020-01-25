@@ -5,11 +5,13 @@ import ReaderDigest
 import GuangMing
 import People
 import XinHua
+import Science
 
-# ReaderDigest.searchMain()
-rdu = 0
+rdu = ReaderDigest.searchMain()
 gmu = GuangMing.searchMain()
 pu = People.searchMain()
 xhu = XinHua.searchMain()
+scu = Science.searchMain()
 
-print("\nReaderDigest {} GuangMing {} People {} XinHua {}".format(rdu, gmu, pu, xhu))
+print("\nReaderDigest {} GuangMing {} People {} XinHua {} Science {}".format(
+    rdu, gmu, pu, xhu, scu))

@@ -11,6 +11,7 @@ import re
 import os
 import ReadWordDict
 import Lemmatizer
+import threading
 
 # patterns that used to find or/and replace particular chars or words
 # to find chars that are not a letter, a blank or a quotation
@@ -77,7 +78,7 @@ def getWordnetPos(treebank_tag):
         return nltk.corpus.wordnet.NOUN
 
 
-def countFile(file, wordDict):
+def countFile(file, wordDict, stdDict):
     hit = 0
     miss = 0
     with open(file, encoding="utf-8") as f:
@@ -86,6 +87,9 @@ def countFile(file, wordDict):
             ws = nltk.pos_tag(word_tokenize(filter(sen).lower()))
             for word in ws:
                 wt = word[0]
+                wt = wt[0].lower()+wt[1:]
+                if not (wt.islower() and wt.isalpha()):
+                    continue
                 if wt in wordDict:
                     hit += 1
                 else:
@@ -93,12 +97,13 @@ def countFile(file, wordDict):
                     lwt = lemmatize(wt, pos)
                     if lwt in wordDict:
                         hit += 1
-                    else:
+                    elif lwt in stdDict:
                         miss += 1
+
     return (hit, miss)
 
 
-def count(wordDict, dirs):
+def count(wordDict, stdDict, dirs):
     hit = 0
     miss = 0
     cnt = 0
@@ -107,7 +112,7 @@ def count(wordDict, dirs):
             for f in files:
                 cnt = cnt+1
                 print("{} {}".format(cnt, f))
-                nh, nm = countFile(r+f, wordDict)
+                nh, nm = countFile(r+f, wordDict, stdDict)
                 hit += nh
                 miss += nm
     print("hit {} miss {}".format(hit, miss))
@@ -116,4 +121,6 @@ def count(wordDict, dirs):
 
 if __name__ == '__main__':
     rd = ReadWordDict.Dict("../../DataBase/English/ECDICTData/readword.db")
-    count(rd.dumps(), {'../Spider/Output/ReaderDigest/'})
+    stdrd = ReadWordDict.Dict("../../DataBase/English/ECDICTData/stardict.db")
+    count(rd.dumps(), stdrd.dumps(), {'../Spider/Output/ReaderDigest/',
+                                      '../Spider/Output/Science/'})

@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+# TODO http://opinion.people.com.cn/GB/8213/420650/index.html
+
 import time
 import re
 from bs4 import BeautifulSoup
+from faker import Faker
 import requests
 import os
 
@@ -14,7 +17,32 @@ cache = 0
 vaild = 0
 new = 0
 
-blacklist = {u"小蒋的话：", u"相关评论"}
+blacklist = {u"小蒋的话：", u"相关评论", u"【相关阅读】"}
+
+faker = Faker("zh_CN")
+
+
+def getHtmlImpl(address):
+    while True:
+        time.sleep(0.05)
+        header = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3833.98 Safari/537.36"}
+        return requests.get(address, headers=header, allow_redirects=True).content.decode("gbk")
+
+
+def getHtml(address):
+    res = None
+    for i in range(10):
+        try:
+            res = getHtmlImpl(address)
+        except BaseException as e:
+            print(address, e)
+            time.sleep(1.0)
+            continue
+        else:
+            return res
+    print("Failed to get {}".format(address))
+    return u""
 
 
 def dfsWrite(out, blk):
@@ -48,8 +76,7 @@ def getContent(name, url):
         vaild = vaild+1
         return
     time.sleep(0.05)
-    text = requests.get(
-        url).content.decode("gbk")
+    text = getHtml(url)
     soup = BeautifulSoup(text, "lxml")
     blk = soup.select_one('div[class="box_con"]')
     if blk == None:
@@ -67,7 +94,7 @@ def getContent(name, url):
 def searchIndex(address):
     print('-------')
     time.sleep(0.1)
-    text = requests.get(address).content.decode("gbk")
+    text = getHtml(address)
 
     soup = BeautifulSoup(text, "lxml")
     blks = soup.select('ul[class="list_14 clearfix"]')
@@ -99,7 +126,10 @@ def searchIter(id):
     address = base+"/GB/"+str(id)+"/index.html"
     print("begin with {}".format(address))
     while address != None:
+        old = new
         address = searchIndex(address)
+        if old == new:
+            break
 
 
 def searchMain():
@@ -116,6 +146,7 @@ def searchMain():
     searchIter(51863)
     searchIter(364183)
     searchIter(51854)
+    searchIter(223228)
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
     return new

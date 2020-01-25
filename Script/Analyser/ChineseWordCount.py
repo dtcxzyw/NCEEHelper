@@ -5,15 +5,19 @@
 
 import jieba
 import os
+import re
 
 stopwords = [line.strip() for line in open(
     "Input/stopwords.txt", encoding="utf-8").readlines()]
+
+nchn = re.compile(r"[^\u4e00-\u9fff]")
 
 
 def countFile(filename, counts):
     text = open(filename, encoding="utf-8").read()
     words = jieba.cut_for_search(text, HMM=True)
     for word in words:
+        word = re.sub(nchn, "", word)
         if word.isspace():
             continue
         if word not in stopwords:
@@ -25,7 +29,7 @@ def output(counts):
     items = list(counts.items())
     items.sort(key=lambda x: x[1], reverse=True)
     for word, count in items:
-        if len(word) >= 4:
+        if len(word) >= 1:
             out.write("{:<10}{:>7}\n".format(word, count))
 
 

@@ -4,11 +4,10 @@
 import time
 import re
 from bs4 import BeautifulSoup
-import random
+from faker import Faker
 import requests
 import os
 
-base = 'http://rd.com'
 output = './Output/ReaderDigest/'
 count = 0
 cache = 0
@@ -17,22 +16,29 @@ new = 0
 
 blacklist = {}
 
-agents = [
-    "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0",
-    "Mozilla/5.0 (X11; Gentoo; rv:67.0) Gecko/20100101 Firefox/67.0",
-    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.13; rv:60.0) Gecko/20100101 Firefox/60.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.80 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.98 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3833.114 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.110 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.12; rv:68.0) Gecko/20100101 Firefox/68.0"
-]
+fake = Faker("zh_CN")
+
+
+def getHtmlImpl(address):
+    while True:
+        time.sleep(0.05)
+        header = {"User-Agent": fake.user_agent()}
+        return requests.get(address, headers=header, allow_redirects=True, timeout=5).content.decode("UTF-8")
 
 
 def getHtml(address):
-    time.sleep(0.05)
-    header = {"User-Agent": random.choice(agents)}
-    return requests.get(address, headers=header).content.decode("UTF-8")
+    res = None
+    for i in range(10):
+        try:
+            res = getHtmlImpl(address)
+        except BaseException as e:
+            print(address, e)
+            time.sleep(1.0)
+            continue
+        else:
+            return res
+    print("Failed to get {}".format(address))
+    return u""
 
 
 def dfsWrite(out, blk):
@@ -61,13 +67,13 @@ def dfsWrite(out, blk):
 def getContent(name, url):
     global count
     global vaild
-    count = count + 1
+    count += 1
     filename = output+name
     if os.path.exists(filename):
         print("use cache {}".format(name))
         global cache
-        cache = cache + 1
-        vaild = vaild+1
+        cache += 1
+        vaild += 1
         return
     text = getHtml(url)
     soup = BeautifulSoup(text, "lxml")
@@ -80,21 +86,21 @@ def getContent(name, url):
     dfsWrite(out, blks)
 
     print("{} -> {}".format(url, name))
-    vaild = vaild+1
+    vaild += 1
     global new
-    new = new+1
+    new += 1
+    print("New count {}".format(new))
 
 
-def getContentUrl(url):
-    pos = len("https://www.rd.com/true-stories/")
-    name = url[pos:-1]
+def getContentUrl(url, baseLen):
+    name = url[baseLen:-1]
     if name.find("page/") == 0:
         return
     getContent(name.replace("/", "-")+".txt", url)
     print('------')
 
 
-def searchIndex(address):
+def searchIndex(address, base):
     print('-------')
     text = getHtml(address)
 
@@ -104,13 +110,25 @@ def searchIndex(address):
 
     for blk in blks.select('a'):
         url = blk['href']
-        if url.find("www.rd.com/true-stories/") != -1 and url.count("/") >= 6:
-            getContentUrl(url)
+        if url.find(base) != -1 and (base.find("culture") != -1 or url.count("/") >= 6) and url != base:
+            getContentUrl(url, len(base))
 
     nxt = soup.select_one('a[class="next page-numbers"]')
     if nxt != None:
         nxt = nxt['href']
     return nxt
+
+
+def searchIter(url):
+    base = url
+    page = 0
+    while url != None:
+        page += 1
+        old = new
+        print("Page {}".format(page))
+        url = searchIndex(url, base)
+        if old == new:
+            break
 
 
 def searchMain():
@@ -123,9 +141,12 @@ def searchMain():
     global new
     new = 0
 
-    url = base+"/true-stories/"
-    while url != None:
-        url = searchIndex(url)
+    searchIter("https://www.rd.com/true-stories/")
+    searchIter("https://www.thehealthy.com/food/")
+    searchIter("https://www.thehealthy.com/exercise/")
+    searchIter("https://www.thehealthy.com/aging/mind-memory/")
+    searchIter("https://www.rd.com/advice/")
+    searchIter("https://www.rd.com/culture/")
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
     return new
