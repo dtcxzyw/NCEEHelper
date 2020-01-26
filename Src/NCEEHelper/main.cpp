@@ -12,8 +12,16 @@ BUS_MODULE_NAME("NCEEHelper.Main");
 
 static int mainImpl(int argc, char** argv, Bus::ModuleSystem& sys) {
     BUS_TRACE_BEG() {
-        if(argc < 2)
+        if(argc < 2) {
+            std::stringstream ss;
+            ss << "Possible Command:" << std::endl;
+            for(auto id : sys.list<Command>()) {
+                ss << id.name << std::endl;
+            }
+            sys.getReporter().apply(ReportLevel::Info, ss.str(),
+                                    BUS_DEFSRCLOC());
             BUS_TRACE_THROW(std::invalid_argument("Need Command Name"));
+        }
         std::shared_ptr<Command> command =
             sys.instantiateByName<Command>(argv[1]);
         if(!command)

@@ -1,3 +1,4 @@
+#include "../Shared/Command.hpp"
 #include "../Shared/Config.hpp"
 #include "../Shared/KnowledgeLibrary.hpp"
 #include "../Shared/Tester.hpp"
@@ -5,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #pragma warning(push, 0)
+#include <crossguid/guid.hpp>
 #include <pybind11/embed.h>
 namespace py = pybind11;
 using namespace py::literals;
@@ -97,6 +99,7 @@ public:
 class WordLUT final {
 private:
     std::unordered_set<size_t> mWords;
+    py::object mDataBase;
 
     size_t hash(const std::string& str) const {
         std::hash<std::string> hasher;
@@ -106,9 +109,9 @@ private:
 public:
     WordLUT(const fs::path& dataPath) {
         py::module dict = py::module::import("stardict");
-        auto dataBase = dict.attr("StarDict")(
-            py::str{ (dataPath / "wordcast.db").string() });
-        for(auto ref : dataBase) {
+        mDataBase = dict.attr("StarDict")(
+            py::str{ (dataPath / "readword.db").string() });
+        for(auto ref : mDataBase) {
             auto iter = ref.begin();
             ++iter;
             ++iter;
@@ -119,9 +122,22 @@ public:
     bool count(const std::string& str) const {
         return mWords.count(hash(str));
     }
+    std::string translation(const std::string& word) const {
+        BUS_TRACE_BEG() {
+            auto res = mDataBase[py::str(word)];
+            auto str = res["translation"];
+            str = str.attr("replace")("[", "【");
+            str = str.attr("replace")("]", "】");
+            str = str.attr("replace")("\n", "");
+            str = str.attr("replace")("\r", "");
+            str = str.attr("replace")("\"", "");
+            return str.cast<std::string>();
+        }
+        BUS_TRACE_END();
+    }
 };
 
-class WordCast final : public KnowledgeLibrary {
+class WordCastGenerator final : public Command {
 private:
     py::object mConjugate;
     py::str conjImpl(py::str word, py::dict ex, const char* t1,
@@ -154,9 +170,13 @@ private:
     bool is3sgNormal(py::str word, py::str tsg) {
         std::string sw = word.cast<std::string>();
         std::string st = tsg.cast<std::string>();
-        if(sw.substr(sw.size() - 2) == "ss")
-            return st == sw + "es";
-        return st == sw + "s";
+        if(sw + "s" == st)
+            return true;
+        if(sw + "es" == st)
+            return true;
+        if(sw.back() == 'y')
+            return st == sw.substr(0, sw.size() - 1) + "ies";
+        return false;
     }
 
     bool isPartNormal(py::str word, py::str part) {
@@ -229,13 +249,12 @@ private:
         return res.begin()->begin()->cast<std::string>();
     }
 
-public:
-    explicit WordCast(Bus::ModuleInstance& instance)
-        : KnowledgeLibrary(instance) {}
-
-    void load(const fs::path& dataBase) override {
+    void gen(std::function<void(const std::string&, const std::string&,
+                                const std::string&)>
+                 out,
+             const fs::path& dbp) {
         BUS_TRACE_BEG() {
-            fs::path dataPath = dataBase / "English" / "ECDICTData";
+            fs::path dataPath = dbp / "English" / "ECDICTData";
             py::module::import("sys").attr("path").attr("append")(
                 py::str{ dataPath.string() });
             py::module dict = py::module::import("stardict");
@@ -266,15 +285,15 @@ public:
                 "sub",   "sur",  "trans", "ultra", "un",    "under", "up"
             };
             static const char* suffix[] = {
-                "able", "age",   "al",    "ance",   "ant",  "ate",  "arian",
-                "ary",  "ation", "cy",    "cation", "dom",  "ed",   "ee",
-                "er",   "ese",   "esque", "ess",    "ency", "en",   "ence",
-                "ety",  "fold",  "ful",   "hood",   "ics",  "ial",  "ical",
-                "ify",  "ing",   "ion",   "ish",    "ism",  "ist",  "ista",
-                "ite",  "itis",  "ize",   "ive",    "ity",  "less", "let",
-                "ling", "logy",  "ly",    "ment",   "most", "ness", "oid",
-                "or",   "ory",   "ous",   "ship",   "t",    "ty",   "th",
-                "ward", "wise",  "y",     "ure",    "ze"
+                "able", "age",   "al",   "ance",   "ant",  "ate",  "arian",
+                "ary",  "ation", "cy",   "cation", "dom",  "ee",   "er",
+                "ese",  "esque", "ess",  "en",     "ence", "ety",  "fold",
+                "ful",  "hood",  "ics",  "ial",    "ical", "ify",  "ion",
+                "ish",  "ism",   "ist",  "ista",   "ite",  "itis", "ize",
+                "ive",  "ity",   "less", "let",    "ling", "logy", "ment",
+                "most", "ness",  "oid",  "or",     "ory",  "ous",  "ship",
+                "t",    "ty",    "th",   "ward",   "wise", "y",    "ure",
+                "ze"
             };
 
             BUS_TRACE_POINT();
@@ -297,64 +316,73 @@ public:
                 //动词
                 if(tagger.isVerb(tag, pos)) {
                     drv = true;
-                    // py::print("{} is verb"_s.format(word));
+                    py::print("{} is verb"_s.format(word));
                     //第3人称单数
                     auto tsg = get3sg(word, exg);
-                    if(!is3sgNormal(word, tsg)) {
-                        py::print("{} -3sg-> {}"_s.format(word, tsg));
-                    }
+                    if(!is3sgNormal(word, tsg))
+                        out("第三人称单数", word.cast<std::string>(),
+                            tsg.cast<std::string>());
                     //过去式
                     auto pass = getPass(word, exg);
                     if(!isPassNormal(word, pass)) {
-                        py::print("{} -pass-> {}"_s.format(word, pass));
+                        out("过去式", word.cast<std::string>(),
+                            pass.cast<std::string>());
                     }
                     //过去分词
                     auto ppart = getPPart(word, exg);
                     if(!isPPartNormal(word, ppart)) {
-                        py::print("{} -ppart-> {}"_s.format(word, ppart));
+                        out("过去分词", word.cast<std::string>(),
+                            ppart.cast<std::string>());
                     }
                     //现在分词
                     auto part = getPart(word, exg);
                     if(!isPartNormal(word, part)) {
-                        py::print("{} -part-> {}"_s.format(word, part));
+                        out("现在分词", word.cast<std::string>(),
+                            part.cast<std::string>());
                     }
                 }
                 BUS_TRACE_POINT();
                 //名词
                 if(tagger.isNoun(tag, pos)) {
                     drv = true;
-                    // py::print("{} is noun"_s.format(word));
+                    py::print("{} is noun"_s.format(word));
                     //复数
                     auto plur = getPlur(word, exg);
                     if(!isPlurNormal(word, plur)) {
-                        py::print("{} -plur-> {}"_s.format(word, plur));
+                        out("复数", word.cast<std::string>(),
+                            plur.cast<std::string>());
                     }
                     //定冠词
                     auto ref = refer(word);
                     if(ref.cast<std::string>().substr(0, 2) == "an") {
-                        py::print("{} use an"_s.format(word));
+                        std::string sw = word.cast<std::string>();
+                        if(!(sw[0] == 'a' || sw[0] == 'e' || sw[0] == 'i' ||
+                             sw[0] == 'o' || sw[0] == 'u'))
+                            out("定冠词", word.cast<std::string>(), "an");
                     }
                 }
                 BUS_TRACE_POINT();
                 //形容词
                 if(tagger.isAdj(tag, pos)) {
                     drv = true;
-                    // py::print("{} is adj"_s.format(word));
+                    py::print("{} is adj"_s.format(word));
                     //比较级
                     auto comp = getComp(word, exg);
                     if(!isCompNormal(word, comp)) {
-                        py::print("{} -comp-> {}"_s.format(word, comp));
+                        out("比较级", word.cast<std::string>(),
+                            comp.cast<std::string>());
                     }
                     //最高级
                     auto super = getSuper(word, exg);
                     if(!isSuperNormal(word, super)) {
-                        py::print("{} -super-> {}"_s.format(word, super));
+                        out("最高级", word.cast<std::string>(),
+                            super.cast<std::string>());
                     }
                 }
                 BUS_TRACE_POINT();
                 //副词
                 if(tagger.isAdv(tag, pos)) {
-                    // py::print("{} is adv"_s.format(word));
+                    py::print("{} is adv"_s.format(word));
                 }
                 //前后缀派生词
                 if(!drv)
@@ -362,15 +390,16 @@ public:
                 std::string sw = word.cast<std::string>();
                 for(auto pre : prefix) {
                     std::string drv = pre + sw;
-                    if(lut.count(drv))
-                        py::print("{} -  {}-  -> {}"_s.format(word, pre,
-                                                              py::str(drv)));
+                    if(lut.count(drv)) {
+                        out("派生：" + lut.translation(drv),
+                            word.cast<std::string>(), drv);
+                    }
                 }
                 for(auto suf : suffix) {
                     std::string drv = sw + suf;
                     if(lut.count(drv))
-                        py::print("{} -  -{}  -> {}"_s.format(word, suf,
-                                                              py::str(drv)));
+                        out("派生：" + lut.translation(drv),
+                            word.cast<std::string>(), drv);
                 }
                 std::string old = sw;
                 fixTail(sw);
@@ -378,8 +407,8 @@ public:
                     for(auto suf : suffix) {
                         std::string drv = sw + suf;
                         if(lut.count(drv))
-                            py::print("@ {} - -{}  -> {}"_s.format(
-                                word, suf, py::str(drv)));
+                            out("派生：" + lut.translation(drv),
+                                word.cast<std::string>(), drv);
                     }
                 }
                 //末尾修改派生词
@@ -392,8 +421,8 @@ public:
                         std ::string drv =
                             sw.substr(0, sw.size() - ot.size()) + nt;
                         if(lut.count(drv))
-                            py::print("# {} -{}-{}-> {}"_s.format(
-                                word, py::str(ot), py::str(nt), py::str(drv)));
+                            out("派生：" + lut.translation(drv),
+                                word.cast<std::string>(), drv);
                     }
                 };
                 checkTail("al", "ety");
@@ -401,7 +430,7 @@ public:
                 checkTail("ble", "bility");
                 checkTail("t", "cy");
                 checkTail("te", "cy");
-                checkTail("e", "");
+                // checkTail("e", "");
                 checkTail("t", "ssion");
                 checkTail("ve", "f");
                 checkTail("d", "se");
@@ -415,20 +444,104 @@ public:
         }
         BUS_TRACE_END();
     }
-    GUIDTable getTable() override {
+
+public:
+    explicit WordCastGenerator(Bus::ModuleInstance& instance)
+        : Command(instance) {}
+    int doCommand(int argc, char** argv) override {
+        BUS_TRACE_BEG() {
+            Bus::FunctionId id{
+                str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), "JsonConfig"
+            };
+            auto config = system().instantiate<Config>(id);
+            config->load("config.json");
+            fs::path dataBaseRoot = config->attribute("DataBase")->asString();
+            std::ofstream out(dataBaseRoot / "English" / "ECDICTData" /
+                              "CastGen.json");
+            out << "[" << std::endl;
+            bool first = true;
+            auto write = [&](const std::string& note, const std::string& src,
+                             const std::string& dst) {
+                if(first)
+                    first = false;
+                else
+                    out << ",\n";
+                auto guid = xg::newGuid().str();
+                for(char& c : guid)
+                    if(islower(c))
+                        c = toupper(c);
+                out << "\"{" << guid << "}" << src << "->(" << note << ")["
+                    << dst << "]\"";
+            };
+            gen(write, dataBaseRoot);
+            out << "\n]\n" << std::endl;
+            reporter().apply(ReportLevel::Info, "Done", BUS_DEFSRCLOC());
+            return EXIT_SUCCESS;
+        }
+        BUS_TRACE_END();
+    }
+};
+
+class WordCast final : public KnowledgeLibrary {
+private:
+    std::unordered_map<GUID, std::shared_ptr<Tester>, GUIDHasher> mKPS;
+    uint32_t mFillCnt, mJudgeCnt;
+    fs::path mDataBase;
+
+public:
+    explicit WordCast(Bus::ModuleInstance& instance)
+        : KnowledgeLibrary(instance) {}
+
+    void load(const fs::path& dataBase) {
+        BUS_TRACE_BEG() {
+            mFillCnt = mJudgeCnt = 0;
+            mDataBase = dataBase / "English";
+            Bus::FunctionId id{
+                str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), ""
+            };
+            // Fill.json
+            {
+                id.name = "JsonConfig";
+                auto cfg = system().instantiate<Config>(id);
+                if(!cfg->load(mDataBase / "Cast.json"))
+                    BUS_TRACE_THROW(
+                        std::runtime_error("Failed to load Fill.json"));
+                id.name = "FillTester";
+                for(auto ele : cfg->expand()) {
+                    ++mFillCnt;
+                    auto tester = system().instantiate<Tester>(id);
+                    GUID id = tester->init(ele);
+                    auto& val = mKPS[id];
+                    if(val)
+                        BUS_TRACE_THROW(std::logic_error("GUID redefined"));
+                    val.swap(tester);
+                }
+            }
+        }
+        BUS_TRACE_END();
+    }
+    GUIDTable getTable() {
         GUIDTable res;
+        for(auto&& x : mKPS)
+            res.emplace_back(x.first);
         return res;
     }
-    TestResult test(GUID kpID) override {
+    TestResult test(GUID kpID) {
         BUS_TRACE_BEG() {
             TestResult res;
+            res.kpID = { kpID };
+            auto iter = mKPS.find(kpID);
+            if(iter == mKPS.end())
+                BUS_TRACE_THROW(std::logic_error("Invaild GUID"));
+            res.result = iter->second->test();
             return res;
         }
         BUS_TRACE_END();
     }
-
-    std::string summary() override {
+    std::string summary() {
         std::stringstream ss;
+        using Clock = fs::file_time_type::clock;
+        ss << "Fill.json count: " << mFillCnt << std::endl;
         return ss.str();
     }
 };
@@ -457,11 +570,15 @@ public:
     std::vector<Bus::Name> list(Bus::Name api) const override {
         if(api == KnowledgeLibrary::getInterface())
             return { "WordCast" };
+        if(api == Command::getInterface())
+            return { "WordCastGen" };
         return {};
     }
     std::shared_ptr<Bus::ModuleFunctionBase> instantiate(Name name) override {
         if(name == "WordCast")
             return std::make_shared<WordCast>(*this);
+        if(name == "WordCastGen")
+            return std::make_shared<WordCastGenerator>(*this);
         return nullptr;
     }
 };

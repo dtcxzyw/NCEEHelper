@@ -33,7 +33,7 @@ public:
                 str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), "JsonConfig"
             };
             auto config = system().instantiate<Config>(id);
-            config->load("TestConfig.json");
+            config->load("config.json");
             fs::path historyRoot = config->attribute("History")->asString();
             fs::path dataBaseRoot = config->attribute("DataBase")->asString();
             klib->load(dataBaseRoot);
