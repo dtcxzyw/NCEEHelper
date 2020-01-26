@@ -8,8 +8,11 @@
 #pragma warning(push, 0)
 #include <crossguid/guid.hpp>
 #include <pybind11/embed.h>
+#include <unicode/unistr.h>
+#include <unicode/ustream.h>
 namespace py = pybind11;
 using namespace py::literals;
+using String = icu::UnicodeString;
 #pragma warning(pop)
 
 BUS_MODULE_NAME("NCEEHelper.English");
@@ -485,7 +488,7 @@ public:
 class WordCast final : public KnowledgeLibrary {
 private:
     std::unordered_map<GUID, std::shared_ptr<Tester>, GUIDHasher> mKPS;
-    uint32_t mFillCnt, mJudgeCnt;
+    uint32_t mFillCnt;
     fs::path mDataBase;
 
 public:
@@ -494,7 +497,7 @@ public:
 
     void load(const fs::path& dataBase) {
         BUS_TRACE_BEG() {
-            mFillCnt = mJudgeCnt = 0;
+            mFillCnt = 0;
             mDataBase = dataBase / "English";
             Bus::FunctionId id{
                 str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), ""
@@ -546,6 +549,80 @@ public:
     }
 };
 
+struct ReadWordEntry final {
+    String trans, word, pos;
+};
+
+class ReadWord final : public KnowledgeLibrary {
+private:
+    std::unordered_map<GUID, ReadWordEntry, GUIDHasher> mRWS;
+
+public:
+    explicit ReadWord(Bus::ModuleInstance& instance)
+        : KnowledgeLibrary(instance) {}
+
+    void load(const fs::path& dbp) {
+        BUS_TRACE_BEG() {
+            fs::path dataPath = dbp / "English" / "ECDICTData";
+            py::module::import("sys").attr("path").attr("append")(
+                py::str{ dataPath.string() });
+            py::module dict = py::module::import("stardict");
+            py::object dataBase = dict.attr("StarDict")(
+                py::str{ (dataPath / "readword.db").string() });
+            BUS_TRACE_POINT();
+            for(auto ref : dataBase) {
+                auto id = *ref.begin();
+                auto info = dataBase.attr("query")(id);
+                auto trans = info["translation"].cast<std::string>();
+                auto pos = info["pos"].cast<std::string>();
+                auto wt = info["word"].cast<std::string>();
+                GUID guid{ 0ULL, static_cast<uint64_t>(id.cast<int>()) };
+                ReadWordEntry& entry = mRWS[guid];
+                entry.trans = String(trans.c_str(), "utf-8");
+                entry.pos = String(pos.c_str(), "utf-8");
+                entry.word = String(wt.c_str(), "utf-8");
+            }
+        }
+        BUS_TRACE_END();
+    }
+    GUIDTable getTable() {
+        GUIDTable res;
+        for(auto&& k : mRWS)
+            res.emplace_back(k.first);
+        return res;
+    }
+    TestResult test(GUID kpID) {
+        BUS_TRACE_BEG() {
+            TestResult res;
+            res.kpID = { kpID };
+            res.result = -1;
+            auto&& entry = mRWS[kpID];
+            std::cout << entry.word << "[" << entry.pos << "]" << std::endl;
+            std::string line;
+            std::getline(std::cin, line);
+            if(line == "#quit")
+                return res;
+            std::cout << entry.trans << std::endl;
+            while(true) {
+                std::getline(std::cin, line);
+                if(line == "#quit")
+                    return res;
+                if(line == "T" || line == "t" || line == "f" || line == "F") {
+                    res.result = (line == "T" || line == "t");
+                    return res;
+                }
+                std::cout << String("请输入T/F", "utf-8") << std::endl;
+            }
+        }
+        BUS_TRACE_END();
+    }
+    std::string summary() {
+        std::stringstream ss;
+        ss << "Word count:" << mRWS.size() << std::endl;
+        return ss.str();
+    }
+};
+
 class Instance final : public Bus::ModuleInstance {
 private:
     py::scoped_interpreter mInterpreter;
@@ -569,7 +646,7 @@ public:
     }
     std::vector<Bus::Name> list(Bus::Name api) const override {
         if(api == KnowledgeLibrary::getInterface())
-            return { "WordCast" };
+            return { "WordCast", "ReadWord" };
         if(api == Command::getInterface())
             return { "WordCastGen" };
         return {};
@@ -577,6 +654,8 @@ public:
     std::shared_ptr<Bus::ModuleFunctionBase> instantiate(Name name) override {
         if(name == "WordCast")
             return std::make_shared<WordCast>(*this);
+        if(name == "ReadWord")
+            return std::make_shared<ReadWord>(*this);
         if(name == "WordCastGen")
             return std::make_shared<WordCastGenerator>(*this);
         return nullptr;
