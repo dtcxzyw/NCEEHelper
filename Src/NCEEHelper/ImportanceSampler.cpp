@@ -82,8 +82,8 @@ private:
         for(auto& key : mHistory) {
             TestHistory& his = key.second;
             // accuracy 60%
-            double weight = 6.0 *
-                std::min(10.0,
+            double weight = 12.0 *
+                std::min(5.0,
                          static_cast<double>(his.testCnt + 1) /
                              (his.passCnt + 1));
             // new knowledge 10%
@@ -173,9 +173,14 @@ public:
         std::sort(top.rbegin(), top.rend());
         ss << "Top 10" << std::endl;
         size_t msiz = std::min(10ULL, top.size());
-        for(size_t i = 0; i < msiz; ++i)
-            ss << GUID2Str(top[i].second) << " " << top[i].first << std::endl;
-
+        for(size_t i = 0; i < msiz; ++i) {
+            GUID guid = top[i].second;
+            ss << GUID2Str(guid) << " " << top[i].first;
+            TestHistory his = mHistory[guid];
+            if(his.testCnt)
+                ss << " " << (his.passCnt * 100.0 / his.testCnt) << "%";
+            ss << std::endl;
+        }
         return ss.str();
     }
     void recordTestResult(TestResult res) override {
