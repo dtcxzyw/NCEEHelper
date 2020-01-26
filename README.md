@@ -9,7 +9,7 @@
 - [x] 词型转换测试
 - [x] 阅读词汇测试
 - [ ] 作文表达测试
-- [ ] 英语作文表达替换工具
+- [ ] 英语作文表达替换工具(基于regex)
 - [ ] markdown导出工具(pypandoc)
 - [ ] 历史分析工具
 
@@ -17,11 +17,11 @@
 
 ### 语文
 
-- [x] 诗词语料库
-- [x] 时评语料库
-- [x] 二十四史语料库
+- [x] [诗词语料库](https://github.com/chinese-poetry/chinese-poetry)
+- [x] 时评语料库(新华/人民/光明)
+- [x] 二十四史语料库(来源未知)
 - [ ] 阅读题规范表达
-- [x] 成语语料库
+- [x] [成语语料库](https://github.com/fighting41love/funNLP/blob/master/data/%E6%88%90%E8%AF%AD%E8%AF%8D%E5%BA%93/THUOCL_chengyu.txt)
 - [ ] 作文模块化表达
 
 ### 数学
@@ -32,9 +32,9 @@
 
 ### 英语
 - [x] 3500单词词形转换整理
-- [x] 使用当代语料库词频构建阅读语料库
+- [x] 构建阅读语料库(BNC,ANC,COCA,中高考,cet4,collins,oxford核心词,维克多,外文语料库)
 - [x] 外文单词覆盖率测试
-- [x] 外文语料库
+- [x] 外文语料库(ReaderDigest,Science)
 - [ ] 熟词生义
 - [ ] 作文模块化表达
 - [ ] 词义辨析
