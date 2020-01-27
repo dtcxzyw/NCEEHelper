@@ -8,8 +8,7 @@ from bs4 import BeautifulSoup
 import requests
 import os
 
-base = "http://www.xinhuanet.com"
-# TODO：http://www.news.cn/comments/index.htm
+base = "http://www.news.cn"
 
 output = './Output/XinHua'
 count = 0
@@ -81,10 +80,10 @@ def getContent(name, url):
     new = new+1
 
 
-def searchIndex(address):
+def searchIndex(address, sel):
     text = getHtml(address).content.decode("utf-8")
     soup = BeautifulSoup(text, "lxml")
-    blks = soup.select('div[id="hideData3"]')
+    blks = soup.select(sel)
 
     for blk in blks:
         urls = blk.select('li')
@@ -112,7 +111,9 @@ def searchMain():
     vaild = 0
     global new
     new = 0
-    searchIndex(base+"/xhsd/index.htm")
+    searchIndex(base+"/xhsd/index.htm", 'div[id="hideData3"]')
+    searchIndex(base+"/comments/ycpl.htm", 'div[id="hideData"]')
+    searchIndex(base+"/comments/zxpl.htm", 'div[id="hideData"]')
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
     return new
