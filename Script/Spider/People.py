@@ -147,6 +147,7 @@ def searchMain():
     searchIter(364183)
     searchIter(51854)
     searchIter(223228)
+    searchIter(40604)
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
     return new
