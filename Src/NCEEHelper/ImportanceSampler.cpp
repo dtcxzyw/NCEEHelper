@@ -94,6 +94,10 @@ private:
             // forget 20%
             if((his.lastHistory & 1) == 0)
                 weight += 20.0;
+            // master
+            if((his.lastHistory & 7U) == 7U)
+                weight *=
+                    std::max(0.05, 1.0 - his.passCnt / (his.testCnt + 0.01));
             his.weight = weight;
             sum += weight;
             mAccBuffer[idx].first = key.first;
@@ -145,17 +149,23 @@ public:
                                      });
         GUID res =
             (iter == mAccBuffer.end() ? mAccBuffer.back().first : iter->first);
-        std::cout << "Weight:" << mHistory[res].weight << std::endl;
+        std::cout << GUID2Str(res) << std::endl;
+        TestHistory& his = mHistory[res];
+        std::cout << "Weight:" << his.weight << " History:";
+        for(uint32_t i = 0; i < std::min(32U, his.testCnt); ++i)
+            std::cout << ((his.lastHistory >> i) & 1 ? 'T' : 'F');
+        std::cout << " Time:" << his.lastTime << " days ago" << std::endl;
         return res;
     }
     std::string summary() override {
         uint32_t pass = 0, test = 0, coverage = 0, master = 0;
         std::vector<std::pair<double, GUID>> top;
         for(auto&& x : mHistory) {
-            pass += x.second.passCnt, test += x.second.testCnt;
-            coverage += (x.second.testCnt > 0);
-            master += ((x.second.lastHistory & 7U) == 7U);
-            top.push_back(std::make_pair(x.second.weight, x.first));
+            TestHistory& his = x.second;
+            pass += his.passCnt, test += his.testCnt;
+            coverage += (his.testCnt > 0);
+            master += ((his.lastHistory & 7U) == 7U);
+            top.push_back(std::make_pair(his.weight, x.first));
         }
         std::stringstream ss;
         ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy: ";

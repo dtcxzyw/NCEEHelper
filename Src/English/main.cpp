@@ -573,14 +573,20 @@ public:
             for(auto ref : dataBase) {
                 auto id = *ref.begin();
                 auto info = dataBase.attr("query")(id);
-                auto trans = info["translation"].cast<std::string>();
-                auto pos = info["pos"].cast<std::string>();
-                auto wt = info["word"].cast<std::string>();
+                auto trans = info["translation"];
+                auto pos = info["pos"];
+                auto wt = info["word"];
                 GUID guid{ 0ULL, static_cast<uint64_t>(id.cast<int>()) };
                 ReadWordEntry& entry = mRWS[guid];
-                entry.trans = String(trans.c_str(), "utf-8");
-                entry.pos = String(pos.c_str(), "utf-8");
-                entry.word = String(wt.c_str(), "utf-8");
+                if(!trans.is_none())
+                    entry.trans =
+                        String(trans.cast<std::string>().c_str(), "utf-8");
+                if(!pos.is_none())
+                    entry.pos =
+                        String(pos.cast<std::string>().c_str(), "utf-8");
+                if(!wt.is_none())
+                    entry.word =
+                        String(wt.cast<std::string>().c_str(), "utf-8");
             }
         }
         BUS_TRACE_END();
