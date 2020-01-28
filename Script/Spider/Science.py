@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# TODO:News
-
 import time
 import re
 from bs4 import BeautifulSoup
@@ -42,6 +40,21 @@ def getHtml(address):
     return u""
 
 
+def dfsWrite(out, blk):
+    if blk.string == None or blk.string.strip() == "":
+        if hasattr(blk, "children"):
+            for sub in blk.children:
+                if sub == '\n':
+                    out.write('\n')
+                elif not dfsWrite(out, sub):
+                    return False
+        return True
+    else:
+        text = blk.string
+        out.write(text)
+        return True
+
+
 def getContent(name, url):
     global count
     global vaild
@@ -57,11 +70,15 @@ def getContent(name, url):
     soup = BeautifulSoup(text, "lxml")
     blk = soup.select_one('meta[name="DC.Description"]')
     if blk == None:
-        print("invalid article {}".format(url))
-        return
-    out = open(filename, "w", encoding='utf-8')
-
-    out.write(blk['content'])
+        blk = soup.select_one('div[class="article__body"]')
+        if blk == None:
+            print("invalid article {}".format(url))
+            return
+        out = open(filename, "w", encoding="utf-8")
+        dfsWrite(out, blk)
+    else:
+        out = open(filename, "w", encoding='utf-8')
+        out.write(blk['content'])
 
     print("{} -> {}".format(url, name))
     vaild += 1
@@ -107,6 +124,44 @@ def searchYear(year):
         searchIndex(base+mth['href'])
 
 
+newsBase = "https://sciencemag.org"
+
+
+def getNewsUrl(name):
+    url = newsBase+name
+    pos = name.rfind('/')
+    name = name[pos+1:]
+    getContent(name+".txt", url)
+    print("------")
+
+
+def searchLatestNews(url):
+    print("-------")
+    text = getHtml(url)
+    soup = BeautifulSoup(text, "lxml")
+    hls = soup.select_one('ul[class="headline-list"]')
+    for headline in hls.select('h2[class="media__headline"]'):
+        ref = headline.select_one('a')
+        print(ref.string)
+        getNewsUrl(ref['href'])
+    nxt = soup.select_one('a[title="Go to next page"]')
+    if nxt != None:
+        return newsBase+nxt['href']
+    return None
+
+
+def searchLatestNewsIter():
+    url = newsBase+"/news/latest-news"
+    cnt = 1
+    while url != None and cnt <= 60:
+        print("Page {}".format(cnt))
+        old = new
+        url = searchLatestNews(url)
+        cnt += 1
+        if old == new:
+            break
+
+
 def searchMain():
     global count
     count = 0
@@ -119,6 +174,7 @@ def searchMain():
 
     # searchYear(2019)
     searchYear(2020)
+    searchLatestNewsIter()
 
     print("count {} cache {} vaild {} new {}".format(count, cache, vaild, new))
     return new
