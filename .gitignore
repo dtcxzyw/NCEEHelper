@@ -39,3 +39,4 @@
 *.pyc
 /Script/Analyser/Output
 /Script/Analyser/Input
+*.pdf

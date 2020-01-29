@@ -10,7 +10,7 @@
 - [x] 阅读词汇测试
 - [ ] 作文表达测试
 - [ ] 英语作文表达替换工具(基于regex)
-- [ ] markdown导出工具(pypandoc)
+- [x] markdown导出工具(~~pypandoc~~改用Markdown PDF插件)
 - [ ] 历史分析工具
 
 ## 数据部分
@@ -23,6 +23,7 @@
 - [ ] 阅读题规范表达
 - [x] [成语语料库](https://github.com/fighting41love/funNLP/blob/master/data/%E6%88%90%E8%AF%AD%E8%AF%8D%E5%BA%93/THUOCL_chengyu.txt)
 - [ ] 作文模块化表达
+- [ ] 应用文格式
 
 ### 数学
 - [ ] 数竞方法整理
