@@ -2,6 +2,7 @@
 #include "../Shared/Config.hpp"
 #include "../Shared/KnowledgeLibrary.hpp"
 #include "../Shared/TestEngine.hpp"
+#include <chrono>
 #include <iostream>
 
 BUS_MODULE_NAME("NCEEHelper.Builtin.TestDriver");
@@ -9,10 +10,23 @@ BUS_MODULE_NAME("NCEEHelper.Builtin.TestDriver");
 static void testImpl(std::shared_ptr<KnowledgeLibrary> klib,
                      std::shared_ptr<TestEngine> eng) {
     BUS_TRACE_BEG() {
+        using Clock = std::chrono::system_clock;
+        auto beg = Clock::now();
         uint32_t cnt = 0;
         while(true) {
             ++cnt;
             std::cout << "Round " << cnt << std::endl;
+            {
+                auto sec =
+                    std::chrono::ceil<std::chrono::seconds>(Clock::now() - beg)
+                        .count();
+                auto hour = sec / 3600;
+                sec %= 3600;
+                auto min = sec / 60;
+                sec %= 60;
+                std::cout << hour << " h " << min << " min " << sec << " s"
+                          << std::endl;
+            }
             GUID id = eng->sampleTest();
             TestResult res = klib->test(id);
             if(res.result == -1)
