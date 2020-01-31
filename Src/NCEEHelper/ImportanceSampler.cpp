@@ -98,6 +98,9 @@ private:
             if((his.lastHistory & 7U) == 7U)
                 weight *=
                     std::max(0.05, 1.0 - his.passCnt / (his.testCnt + 0.01));
+            // coverage
+            if(his.testCnt == 0)
+                weight = 100.0;
             his.weight = weight;
             sum += weight;
             mAccBuffer[idx].first = key.first;

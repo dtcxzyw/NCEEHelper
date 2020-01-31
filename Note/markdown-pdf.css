@@ -8,13 +8,14 @@ body {
 	padding: 0 12px;
 	line-height: 19.5px;
 	word-wrap: break-word;
+	overflow: auto;
 }
 
 pre {
 	background-color: #f8f8f8;
 	border: 1px solid #cccccc;
 	border-radius: 3px;
-	overflow-x: auto;
+	overflow-x: hidden;
 	white-space: pre-wrap;
 	overflow-wrap: break-word;
 }

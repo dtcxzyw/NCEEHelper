@@ -45,7 +45,15 @@ public:
             if(argc != 3)
                 BUS_TRACE_THROW(std::logic_error("Bad arguments"));
             auto klib = system().instantiateByName<KnowledgeLibrary>(argv[1]);
+            if(!klib)
+                BUS_TRACE_THROW(std::runtime_error(
+                    std::string("Failed to instantiate KnowledgeLibrary ") +
+                    argv[1]));
             auto eng = system().instantiateByName<TestEngine>(argv[2]);
+            if(!eng)
+                BUS_TRACE_THROW(std::runtime_error(
+                    std::string("Failed to inistantiate TestEngine ") +
+                    argv[2]));
             Bus::FunctionId id{
                 str2GUID("{D375A669-D1E1-431A-AE14-999A896AF1B2}"), "JsonConfig"
             };

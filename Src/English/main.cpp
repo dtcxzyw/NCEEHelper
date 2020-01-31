@@ -544,7 +544,7 @@ public:
     std::string summary() {
         std::stringstream ss;
         using Clock = fs::file_time_type::clock;
-        ss << "Fill.json count: " << mFillCnt << std::endl;
+        ss << "Cast.json count: " << mFillCnt << std::endl;
         return ss.str();
     }
 };
