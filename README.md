@@ -1,5 +1,11 @@
 # NCEEHelper
 
+## 测试分析
+
+![img](Script/tool/ARes/Biology.png)
+![img](Script/tool/ARes/WordCast.png)
+![img](Script/tool/ARes/ReadWord.png)
+
 ## 软件部分
 
 - [x] 爬虫
@@ -11,7 +17,7 @@
 - [ ] 作文表达测试
 - [ ] 英语作文表达替换工具(基于regex)
 - [x] markdown导出工具(~~pypandoc~~改用Markdown PDF插件)
-- [ ] 历史分析工具
+- [x] 历史分析工具
 
 ## 数据部分
 
@@ -37,7 +43,7 @@
 - [x] 外文单词覆盖率测试
 - [x] 外文语料库(ReaderDigest,Science)
 - [ ] 熟词生义
-- [ ] 作文模块化表达
+- [x] 作文模块化表达
 - [ ] 词义辨析
 - [ ] 牛津同类词学习
 
@@ -45,7 +51,6 @@
 - [x] 物竞方法、公式整理
 - [ ] 拉格朗日方程
 - [x] 大题规范表达
-- [ ] 二次结论
 
 ### 化学
 

@@ -8,8 +8,6 @@
 
 BUS_MODULE_NAME("NCEEHelper.Main");
 
-// TODO:Command usage help
-
 static int mainImpl(int argc, char** argv, Bus::ModuleSystem& sys) {
     BUS_TRACE_BEG() {
         if(argc < 2) {

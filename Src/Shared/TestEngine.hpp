@@ -1,6 +1,10 @@
 #pragma once
 #include "KnowledgeLibrary.hpp"
 
+struct Ratio final {
+    double accuracy, coverage, master;
+};
+
 class TestEngine : public Bus::ModuleFunctionBase {
 protected:
     explicit TestEngine(Bus::ModuleInstance& instance)
@@ -15,4 +19,5 @@ public:
     virtual GUID sampleTest() = 0;
     virtual std::string summary() = 0;
     virtual void recordTestResult(TestResult res) = 0;
+    virtual std::vector<Ratio> analyse() = 0;
 };

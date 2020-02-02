@@ -24,6 +24,25 @@ private:
     std::unique_ptr<std::ofstream> mOutput;
     fs::path mOutputPath;
     uint64_t mCurrent;
+    std::vector<Ratio> mAResults;
+    Ratio analyseHistory() {
+        Ratio res{ 0.0, 0.0, 0.0 };
+        if(mHistory.empty())
+            return res;
+        uint32_t pass = 0, test = 0, coverage = 0, master = 0;
+        for(auto&& x : mHistory) {
+            TestHistory& his = x.second;
+            pass += his.passCnt, test += his.testCnt;
+            coverage += (his.testCnt != 0);
+            master += ((his.lastHistory & 7U) == 7U);
+        }
+        double tot = static_cast<double>(mHistory.size());
+        if(test)
+            res.accuracy = pass / static_cast<double>(test);
+        res.coverage = coverage / tot;
+        res.master = master / tot;
+        return res;
+    }
     void loadRecord(const fs::path& historyFile) {
         BUS_TRACE_BEG() {
             std::ifstream in(historyFile);
@@ -130,9 +149,10 @@ public:
             ss << std::hex << std::uppercase << mCurrent;
             reporter().apply(ReportLevel::Info, "Timestamp " + ss.str(),
                              BUS_DEFSRCLOC());
-            for(auto log : logs)
+            for(auto log : logs) {
                 loadRecord(log);
-
+                mAResults.emplace_back(analyseHistory());
+            }
             buildAccBuffer();
             mRNG.seed(Clock::now().time_since_epoch().count());
             ss << ".log";
@@ -164,7 +184,7 @@ public:
         for(auto&& x : mHistory) {
             TestHistory& his = x.second;
             pass += his.passCnt, test += his.testCnt;
-            coverage += (his.testCnt > 0);
+            coverage += (his.testCnt != 0);
             master += ((his.lastHistory & 7U) == 7U);
             if(his.testCnt)
                 top.push_back(std::make_pair(his.weight, x.first));
@@ -208,6 +228,9 @@ public:
             mOutput->flush();
         }
         BUS_TRACE_END();
+    }
+    std::vector<Ratio> analyse() override {
+        return mAResults;
     }
 };
 

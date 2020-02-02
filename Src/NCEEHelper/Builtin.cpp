@@ -10,6 +10,8 @@ makeISTE(Bus::ModuleInstance& instance);
 std::shared_ptr<Bus::ModuleFunctionBase>
 makeTestDriver(Bus::ModuleInstance& instance);
 std::shared_ptr<Bus::ModuleFunctionBase>
+makeAnalyser(Bus::ModuleInstance& instance);
+std::shared_ptr<Bus::ModuleFunctionBase>
 makeFillTester(Bus::ModuleInstance& instance);
 std::shared_ptr<Bus::ModuleFunctionBase>
 makeJudgeTester(Bus::ModuleInstance& instance);
@@ -34,7 +36,7 @@ public:
         if(api == TestEngine::getInterface())
             return { "ImportanceSampler" };
         if(api == Command::getInterface())
-            return { "TestDriver" };
+            return { "TestDriver", "Analyser" };
         if(api == Tester::getInterface())
             return { "FillTester", "JudgeTester" };
         return {};
@@ -50,6 +52,8 @@ public:
             return makeJudgeTester(*this);
         if(name == "TestDriver")
             return makeTestDriver(*this);
+        if(name == "Analyser")
+            return makeAnalyser(*this);
         return nullptr;
     }
 };
