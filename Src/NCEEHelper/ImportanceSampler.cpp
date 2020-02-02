@@ -83,9 +83,7 @@ private:
             TestHistory& his = key.second;
             // accuracy 60%
             double weight = 12.0 *
-                std::min(5.0,
-                         static_cast<double>(his.testCnt + 1) /
-                             (his.passCnt + 1));
+                std::min(5.0, (his.testCnt + 0.001) / (his.passCnt + 0.001));
             // new knowledge 10%
             if(his.testCnt <= 3)
                 weight += 10.0 - his.testCnt * 3;
@@ -97,7 +95,7 @@ private:
             // master
             if((his.lastHistory & 7U) == 7U)
                 weight *=
-                    std::max(0.05, 1.0 - his.passCnt / (his.testCnt + 0.01));
+                    std::max(0.005, 1.0 - his.passCnt / (his.testCnt + 0.001));
             // coverage
             if(his.testCnt == 0)
                 weight = 100.0;
@@ -168,7 +166,8 @@ public:
             pass += his.passCnt, test += his.testCnt;
             coverage += (his.testCnt > 0);
             master += ((his.lastHistory & 7U) == 7U);
-            top.push_back(std::make_pair(his.weight, x.first));
+            if(his.testCnt)
+                top.push_back(std::make_pair(his.weight, x.first));
         }
         std::stringstream ss;
         ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy: ";
@@ -188,11 +187,9 @@ public:
         size_t msiz = std::min(10ULL, top.size());
         for(size_t i = 0; i < msiz; ++i) {
             GUID guid = top[i].second;
-            ss << GUID2Str(guid) << " " << top[i].first;
             TestHistory his = mHistory[guid];
-            if(his.testCnt)
-                ss << " " << (his.passCnt * 100.0 / his.testCnt) << "%";
-            ss << std::endl;
+            ss << GUID2Str(guid) << " " << top[i].first << " " << his.passCnt
+               << "/" << his.testCnt << std::endl;
         }
         return ss.str();
     }
