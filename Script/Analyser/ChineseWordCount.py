@@ -4,32 +4,32 @@
 # https://blog.csdn.net/htgt_tuntuntun/article/details/80499427
 
 import jieba
+import jieba.posseg as pseg
 import os
 import re
-
-stopwords = [line.strip() for line in open(
-    "Input/stopwords.txt", encoding="utf-8").readlines()]
 
 nchn = re.compile(r"[^\u4e00-\u9fff]")
 
 
 def countFile(filename, counts):
     text = open(filename, encoding="utf-8").read()
-    words = jieba.cut_for_search(text, HMM=True)
-    for word in words:
+    words = pseg.cut(text)
+    for word, flag in words:
         word = re.sub(nchn, "", word)
-        if word.isspace():
+        if word.isspace() or len(word) <= 1:
             continue
-        if word not in stopwords:
-            counts[word] = counts.get(word, 0) + 1
+        dic = counts.get(flag, dict())
+        dic[word] = dic.get(word, 0) + 1
+        counts[flag] = dic
 
 
 def output(counts):
-    out = open("./Output/chinese.txt", "w", encoding="utf-8")
-    items = list(counts.items())
-    items.sort(key=lambda x: x[1], reverse=True)
-    for word, count in items:
-        if len(word) >= 1:
+    for flag, dic in counts.items():
+        out = open("./Output/chinese/{}.txt".format(flag),
+                   "w", encoding="utf-8")
+        items = list(dic.items())
+        items.sort(key=lambda x: x[1], reverse=True)
+        for word, count in items:
             out.write("{:<10}{:>7}\n".format(word, count))
 
 
@@ -46,5 +46,6 @@ def count(dirs):
 
 
 if __name__ == '__main__':
+    # jieba.enable_paddle()
     count({'../Spider/Output/XinHua/', '../Spider/Output/People/',
            "../Spider/Output/GuangMing/"})

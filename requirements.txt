@@ -1,0 +1,13 @@
+nltk==3.4.5
+hanziconv==0.3.2
+numpy==1.18.1
+jieba==0.42.1
+pypandoc==1.4
+requests==2.22.0
+Pattern==3.6
+Faker==4.0.0
+matplotlib==3.1.2
+beautifulsoup4==4.8.2
+en==0.0.1
+inflect==4.0.0
+simplejson==3.17.0
