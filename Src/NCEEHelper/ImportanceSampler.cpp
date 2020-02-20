@@ -23,8 +23,9 @@ private:
     std::mt19937_64 mRNG;
     std::unique_ptr<std::ofstream> mOutput;
     fs::path mOutputPath;
-    uint64_t mCurrent;
+    uint64_t mCurrent, mInvalid;
     std::vector<Ratio> mAResults;
+    std::vector<GUID> mNew;
     Ratio analyseHistory() {
         Ratio res{ 0.0, 0.0, 0.0 };
         if(mHistory.empty())
@@ -89,7 +90,8 @@ private:
                     his.lastHistory =
                         ((his.lastHistory << 1) | static_cast<uint32_t>(res));
                     his.lastTime = day;
-                }
+                } else
+                    ++mInvalid;
             }
         }
         BUS_TRACE_END();
@@ -116,8 +118,10 @@ private:
                 weight *=
                     std::max(0.005, 1.0 - his.passCnt / (his.testCnt + 0.001));
             // coverage
-            if(his.testCnt == 0)
+            if(his.testCnt == 0) {
                 weight = 100.0;
+                mNew.emplace_back(key.first);
+            }
             his.weight = weight;
             sum += weight;
             mAccBuffer[idx].first = key.first;
@@ -145,6 +149,7 @@ public:
             }
             mCurrent =
                 std::chrono::system_clock::now().time_since_epoch().count();
+            mInvalid = 0;
             std::stringstream ss;
             ss << std::hex << std::uppercase << mCurrent;
             reporter().apply(ReportLevel::Info, "Timestamp " + ss.str(),
@@ -157,19 +162,28 @@ public:
             mRNG.seed(Clock::now().time_since_epoch().count());
             ss << ".log";
             mOutputPath = history / ss.str();
+            if(mNew.size() > static_cast<size_t>(100))
+                mNew.resize(static_cast<size_t>(100));
         }
         BUS_TRACE_END();
     }
     GUID sampleTest() override {
-        std::uniform_real_distribution urd(0.0, mAccBuffer.back().second);
-        std::pair<GUID, double> key;
-        key.second = urd(mRNG);
-        auto iter = std::lower_bound(mAccBuffer.begin(), mAccBuffer.end(), key,
-                                     [](const auto& lhs, const auto& rhs) {
-                                         return lhs.second < rhs.second;
-                                     });
-        GUID res =
-            (iter == mAccBuffer.end() ? mAccBuffer.back().first : iter->first);
+        GUID res{};
+        if(mNew.empty()) {
+            std::uniform_real_distribution urd(0.0, mAccBuffer.back().second);
+            std::pair<GUID, double> key;
+            key.second = urd(mRNG);
+            auto iter =
+                std::lower_bound(mAccBuffer.begin(), mAccBuffer.end(), key,
+                                 [](const auto& lhs, const auto& rhs) {
+                                     return lhs.second < rhs.second;
+                                 });
+            res = (iter == mAccBuffer.end() ? mAccBuffer.back().first :
+                                              iter->first);
+        } else {
+            res = mNew.back();
+            mNew.pop_back();
+        }
         std::cout << GUID2Str(res) << std::endl;
         TestHistory& his = mHistory[res];
         std::cout << "Weight:" << his.weight << " History:";
@@ -190,7 +204,8 @@ public:
                 top.push_back(std::make_pair(his.weight, x.first));
         }
         std::stringstream ss;
-        ss << "TestCount: " << test << " PassCount: " << pass << " Accuracy: ";
+        ss << "TestCount: " << test << " PassCount: " << pass
+           << " Invalid: " << mInvalid << " Accuracy: ";
         ss.precision(2);
         if(test)
             ss << std::fixed << (static_cast<double>(pass) / test) * 100.0
