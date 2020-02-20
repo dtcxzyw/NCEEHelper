@@ -23,11 +23,11 @@ private:
     std::mt19937_64 mRNG;
     std::unique_ptr<std::ofstream> mOutput;
     fs::path mOutputPath;
-    uint64_t mCurrent, mInvalid;
+    uint64_t mCurrent, mInvalid, mValid;
     std::vector<Ratio> mAResults;
     std::vector<GUID> mNew;
     Ratio analyseHistory() {
-        Ratio res{ 0.0, 0.0, 0.0 };
+        Ratio res{ 0U, 0.0, 0.0, 0.0 };
         if(mHistory.empty())
             return res;
         uint32_t pass = 0, test = 0, coverage = 0, master = 0;
@@ -37,6 +37,7 @@ private:
             coverage += (his.testCnt != 0);
             master += ((his.lastHistory & 7U) == 7U);
         }
+        res.count = mValid;
         double tot = static_cast<double>(mHistory.size());
         if(test)
             res.accuracy = pass / static_cast<double>(test);
@@ -90,6 +91,7 @@ private:
                     his.lastHistory =
                         ((his.lastHistory << 1) | static_cast<uint32_t>(res));
                     his.lastTime = day;
+                    ++mValid;
                 } else
                     ++mInvalid;
             }
@@ -149,7 +151,7 @@ public:
             }
             mCurrent =
                 std::chrono::system_clock::now().time_since_epoch().count();
-            mInvalid = 0;
+            mInvalid = mValid = 0;
             std::stringstream ss;
             ss << std::hex << std::uppercase << mCurrent;
             reporter().apply(ReportLevel::Info, "Timestamp " + ss.str(),
@@ -193,11 +195,12 @@ public:
         return res;
     }
     std::string summary() override {
-        uint32_t pass = 0, test = 0, coverage = 0, master = 0;
+        uint32_t pass = 0, test = static_cast<uint32_t>(mValid), coverage = 0,
+                 master = 0;
         std::vector<std::pair<double, GUID>> top;
         for(auto&& x : mHistory) {
             TestHistory& his = x.second;
-            pass += his.passCnt, test += his.testCnt;
+            pass += his.passCnt;
             coverage += (his.testCnt != 0);
             master += ((his.lastHistory & 7U) == 7U);
             if(his.testCnt)

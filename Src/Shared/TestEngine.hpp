@@ -2,6 +2,7 @@
 #include "KnowledgeLibrary.hpp"
 
 struct Ratio final {
+    uint64_t count;
     double accuracy, coverage, master;
 };
 

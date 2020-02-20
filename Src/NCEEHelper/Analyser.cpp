@@ -40,8 +40,8 @@ public:
                 fs::path("Results") / (std::string(argv[1]) + ".log");
             std::ofstream out(outputPath);
             for(auto entry : res)
-                out << entry.accuracy << " " << entry.coverage << " "
-                    << entry.master << std::endl;
+                out << entry.count << " " << entry.accuracy << " "
+                    << entry.coverage << " " << entry.master << std::endl;
             std::cout << "->" << outputPath << std::endl;
             return EXIT_SUCCESS;
         }

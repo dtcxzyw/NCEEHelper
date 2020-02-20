@@ -16,27 +16,25 @@ def generate(klib):
         print("Failed to generate data for ", klib)
         return
     path = "../../Bin/Results/{}.log".format(klib)
-    cnt = 0
     X = []
     A = []
     C = []
     M = []
     with open(path, encoding="utf-8") as f:
         for line in f:
-            cnt += 1
-            X.append(cnt)
             ratio = line.split()
-            A.append(float(ratio[0]))
-            C.append(float(ratio[1]))
-            M.append(float(ratio[2]))
+            X.append(float(ratio[0]))
+            A.append(float(ratio[1]))
+            C.append(float(ratio[2]))
+            M.append(float(ratio[3]))
     ct = time.localtime(time.time())
     plt.title("{} {}.{}.{}".format(klib, ct.tm_year, ct.tm_mon, ct.tm_mday))
-    plt.xlabel("Time")
+    plt.xlabel("Count")
     plt.ylabel("Ratio")
     plt.ylim(0.0, 1.0)
-    plt.plot(X, A, label="Accuracy")
-    plt.plot(X, C, label="Coverage")
-    plt.plot(X, M, label="Master")
+    plt.plot(X, A, label="Accuracy", marker=".")
+    plt.plot(X, C, label="Coverage", marker=".")
+    plt.plot(X, M, label="Master", marker='.')
     plt.legend()
     plt.savefig("ARes/{}.png".format(klib))
     plt.close('all')
