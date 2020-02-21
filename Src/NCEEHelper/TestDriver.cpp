@@ -72,7 +72,7 @@ public:
             hisPath /= argv[1];
             fs::create_directory(hisPath);
             eng->init(hisPath, klib->getTable(),
-                      std::string(argv[4]) == "master");
+                      std::string(argv[3]) == "master");
             std::cout << eng->summary() << std::endl;
             testImpl(klib, eng);
             return EXIT_SUCCESS;

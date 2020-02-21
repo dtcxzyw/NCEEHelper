@@ -27,23 +27,26 @@ private:
     std::vector<Ratio> mAResults;
     std::vector<GUID> mNew;
     Ratio analyseHistory() {
-        Ratio res{ 0U, 0.0, 0.0, 0.0 };
-        if(mHistory.empty())
+        BUS_TRACE_BEG() {
+            Ratio res{ 0U, 0.0, 0.0, 0.0 };
+            if(mHistory.empty())
+                return res;
+            uint32_t pass = 0, test = 0, coverage = 0, master = 0;
+            for(auto&& x : mHistory) {
+                TestHistory& his = x.second;
+                pass += his.passCnt, test += his.testCnt;
+                coverage += (his.testCnt != 0);
+                master += ((his.lastHistory & 7U) == 7U);
+            }
+            res.count = mValid;
+            double tot = static_cast<double>(mHistory.size());
+            if(test)
+                res.accuracy = pass / static_cast<double>(test);
+            res.coverage = coverage / tot;
+            res.master = master / tot;
             return res;
-        uint32_t pass = 0, test = 0, coverage = 0, master = 0;
-        for(auto&& x : mHistory) {
-            TestHistory& his = x.second;
-            pass += his.passCnt, test += his.testCnt;
-            coverage += (his.testCnt != 0);
-            master += ((his.lastHistory & 7U) == 7U);
         }
-        res.count = mValid;
-        double tot = static_cast<double>(mHistory.size());
-        if(test)
-            res.accuracy = pass / static_cast<double>(test);
-        res.coverage = coverage / tot;
-        res.master = master / tot;
-        return res;
+        BUS_TRACE_END();
     }
     void loadRecord(const fs::path& historyFile) {
         BUS_TRACE_BEG() {
@@ -99,36 +102,48 @@ private:
         BUS_TRACE_END();
     }
     void buildAccBuffer(bool masterMode) {
-        mAccBuffer.clear();
-        double sum = 0.0;
-        for(auto& key : mHistory) {
-            TestHistory& his = key.second;
-            // accuracy 60%
-            double weight = 12.0 *
-                std::min(5.0, (his.testCnt + 0.001) / (his.passCnt + 0.001));
-            // new knowledge 10%
-            if(his.testCnt <= 3)
-                weight += 10.0 - his.testCnt * 3;
-            // time 10%
-            weight += std::min(his.lastTime, 20U) * 0.5;
-            // forget 20%
-            if((his.lastHistory & 1) == 0)
-                weight += 20.0;
-            // master
-            if((his.lastHistory & 7U) == 7U)
-                weight *=
-                    std::max(0.005, 1.0 - his.passCnt / (his.testCnt + 0.001));
-            // coverage
-            if(his.testCnt == 0) {
-                weight = 100.0;
-                mNew.emplace_back(key.first);
+        BUS_TRACE_BEG() {
+            if(masterMode)
+                reporter().apply(ReportLevel::Debug, "masterMode ON",
+                                 BUS_DEFSRCLOC());
+            mAccBuffer.clear();
+            double sum = 0.0;
+            for(auto& key : mHistory) {
+                TestHistory& his = key.second;
+                // accuracy 60%
+                double weight = 12.0 *
+                    std::min(5.0,
+                             (his.testCnt + 0.001) / (his.passCnt + 0.001));
+                // new knowledge 10%
+                if(his.testCnt <= 3)
+                    weight += 10.0 - his.testCnt * 3;
+                // time 10%
+                weight += std::min(his.lastTime, 20U) * 0.5;
+                // forget 20%
+                if((his.lastHistory & 1) == 0)
+                    weight += 20.0;
+                // master
+                if((his.lastHistory & 7U) == 7U)
+                    weight *= std::max(
+                        0.005, 1.0 - his.passCnt / (his.testCnt + 0.001));
+                // coverage
+                if(his.testCnt == 0) {
+                    weight = 100.0;
+                    mNew.emplace_back(key.first);
+                }
+                his.weight = weight;
+                if((!masterMode) || (his.lastHistory & 7U) != 7U) {
+                    sum += weight;
+                    mAccBuffer.emplace_back(key.first, sum);
+                }
             }
-            his.weight = weight;
-            if((!masterMode) || (his.lastHistory & 7U) != 7U) {
-                sum += weight;
-                mAccBuffer.emplace_back(key.first, sum);
-            }
+            if(masterMode)
+                reporter().apply(ReportLevel::Debug,
+                                 "sublibrary size:" +
+                                     std::to_string(mAccBuffer.size()),
+                                 BUS_DEFSRCLOC());
         }
+        BUS_TRACE_END();
     }
 
 public:
@@ -170,66 +185,78 @@ public:
         BUS_TRACE_END();
     }
     GUID sampleTest() override {
-        GUID res{};
-        if(mNew.empty()) {
-            std::uniform_real_distribution urd(0.0, mAccBuffer.back().second);
-            std::pair<GUID, double> key;
-            key.second = urd(mRNG);
-            auto iter =
-                std::lower_bound(mAccBuffer.begin(), mAccBuffer.end(), key,
-                                 [](const auto& lhs, const auto& rhs) {
-                                     return lhs.second < rhs.second;
-                                 });
-            res = (iter == mAccBuffer.end() ? mAccBuffer.back().first :
-                                              iter->first);
-        } else {
-            res = mNew.back();
-            mNew.pop_back();
+        BUS_TRACE_BEG() {
+            if(mAccBuffer.empty() && mNew.empty())
+                BUS_TRACE_THROW(std::runtime_error("Empty library."));
+            GUID res{};
+            if(mNew.empty()) {
+                std::uniform_real_distribution urd(0.0,
+                                                   mAccBuffer.back().second);
+                std::pair<GUID, double> key;
+                key.second = urd(mRNG);
+                auto iter =
+                    std::lower_bound(mAccBuffer.begin(), mAccBuffer.end(), key,
+                                     [](const auto& lhs, const auto& rhs) {
+                                         return lhs.second < rhs.second;
+                                     });
+                res = (iter == mAccBuffer.end() ? mAccBuffer.back().first :
+                                                  iter->first);
+            } else {
+                res = mNew.back();
+                mNew.pop_back();
+            }
+            std::cout << GUID2Str(res) << std::endl;
+            TestHistory& his = mHistory[res];
+            std::cout << "Weight:" << his.weight << "("
+                      << (his.weight * 100.0 /
+                          (mAccBuffer.back().second + 1e-5))
+                      << "%) History:";
+            for(uint32_t i = 0; i < std::min(32U, his.testCnt); ++i)
+                std::cout << ((his.lastHistory >> i) & 1 ? 'T' : 'F');
+            std::cout << " Time:" << his.lastTime << " days ago" << std::endl;
+            return res;
         }
-        std::cout << GUID2Str(res) << std::endl;
-        TestHistory& his = mHistory[res];
-        std::cout << "Weight:" << his.weight << " History:";
-        for(uint32_t i = 0; i < std::min(32U, his.testCnt); ++i)
-            std::cout << ((his.lastHistory >> i) & 1 ? 'T' : 'F');
-        std::cout << " Time:" << his.lastTime << " days ago" << std::endl;
-        return res;
+        BUS_TRACE_END();
     }
     std::string summary() override {
-        uint32_t pass = 0, test = static_cast<uint32_t>(mValid), coverage = 0,
-                 master = 0;
-        std::vector<std::pair<double, GUID>> top;
-        for(auto&& x : mHistory) {
-            TestHistory& his = x.second;
-            pass += his.passCnt;
-            coverage += (his.testCnt != 0);
-            master += ((his.lastHistory & 7U) == 7U);
-            if(his.testCnt)
-                top.push_back(std::make_pair(his.weight, x.first));
+        BUS_TRACE_BEG() {
+            uint32_t pass = 0, test = static_cast<uint32_t>(mValid),
+                     coverage = 0, master = 0;
+            std::vector<std::pair<double, GUID>> top;
+            for(auto&& x : mHistory) {
+                TestHistory& his = x.second;
+                pass += his.passCnt;
+                coverage += (his.testCnt != 0);
+                master += ((his.lastHistory & 7U) == 7U);
+                if(his.testCnt)
+                    top.push_back(std::make_pair(his.weight, x.first));
+            }
+            std::stringstream ss;
+            ss << "TestCount: " << test << " PassCount: " << pass
+               << " Invalid: " << mInvalid << " Accuracy: ";
+            ss.precision(2);
+            if(test)
+                ss << std::fixed << (static_cast<double>(pass) / test) * 100.0
+                   << "%";
+            else
+                ss << "N/A";
+            ss << std::endl;
+            ss << "Coverage: " << (coverage * 100.0 / mHistory.size()) << "% ("
+               << coverage << "/" << mHistory.size() << ")" << std::endl;
+            ss << "Master: " << (master * 100.0 / mHistory.size()) << "% ("
+               << master << "/" << mHistory.size() << ")" << std::endl;
+            std::sort(top.rbegin(), top.rend());
+            ss << "Top 10" << std::endl;
+            size_t msiz = std::min(10ULL, top.size());
+            for(size_t i = 0; i < msiz; ++i) {
+                GUID guid = top[i].second;
+                TestHistory his = mHistory[guid];
+                ss << GUID2Str(guid) << " " << top[i].first << " "
+                   << his.passCnt << "/" << his.testCnt << std::endl;
+            }
+            return ss.str();
         }
-        std::stringstream ss;
-        ss << "TestCount: " << test << " PassCount: " << pass
-           << " Invalid: " << mInvalid << " Accuracy: ";
-        ss.precision(2);
-        if(test)
-            ss << std::fixed << (static_cast<double>(pass) / test) * 100.0
-               << "%";
-        else
-            ss << "N/A";
-        ss << std::endl;
-        ss << "Coverage: " << (coverage * 100.0 / mHistory.size()) << "% ("
-           << coverage << "/" << mHistory.size() << ")" << std::endl;
-        ss << "Master: " << (master * 100.0 / mHistory.size()) << "% ("
-           << master << "/" << mHistory.size() << ")" << std::endl;
-        std::sort(top.rbegin(), top.rend());
-        ss << "Top 10" << std::endl;
-        size_t msiz = std::min(10ULL, top.size());
-        for(size_t i = 0; i < msiz; ++i) {
-            GUID guid = top[i].second;
-            TestHistory his = mHistory[guid];
-            ss << GUID2Str(guid) << " " << top[i].first << " " << his.passCnt
-               << "/" << his.testCnt << std::endl;
-        }
-        return ss.str();
+        BUS_TRACE_END();
     }
     void recordTestResult(TestResult res) override {
         BUS_TRACE_BEG() {
