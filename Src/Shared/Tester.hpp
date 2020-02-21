@@ -13,4 +13,6 @@ public:
 
     virtual GUID init(std::shared_ptr<Config> cfg) = 0;
     virtual int test() = 0;
+    virtual void outputProblem(std::ostream& out) = 0;
+    virtual void outputAnswer(std::ostream& out) = 0;
 };

@@ -111,6 +111,22 @@ public:
         }
         BUS_TRACE_END();
     }
+    void outputProblem(std::ostream& out) override {
+        for(auto&& cp : mPieces) {
+            if(cp.type == PieceType::Statement)
+                out << cp.state;
+            else
+                outputBlank(cp.ans, out);
+        }
+    }
+    void outputAnswer(std::ostream& out) override {
+        for(auto&& cp : mPieces)
+            if(cp.type == PieceType::Fill) {
+                for(size_t k = 0; k < cp.ans.size(); ++k)
+                    out << (k ? "," : "") << cp.ans[k];
+                out << "  ";
+            }
+    }
 };
 
 std::shared_ptr<Bus::ModuleFunctionBase>

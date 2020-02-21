@@ -22,4 +22,5 @@ public:
     virtual std::string summary() = 0;
     virtual void recordTestResult(TestResult res) = 0;
     virtual std::vector<Ratio> analyse() = 0;
+    virtual double getAcc(GUID guid) = 0;
 };

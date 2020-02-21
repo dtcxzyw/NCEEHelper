@@ -65,7 +65,8 @@ public:
             } else {
                 std::cout << rang::fg::red << String("正确答案为", "utf8")
                           << (mAnswer ? "T" : "F") << std::endl;
-                std::cout << rang::fg::yellow << String("原因/例子有：", "utf8");
+                std::cout << rang::fg::yellow
+                          << String("原因/例子有：", "utf8");
                 for(auto rea : mReason)
                     std::cout << rea << " ";
                 std::cout << rang::fg::reset << std::endl;
@@ -73,6 +74,21 @@ public:
             }
         }
         BUS_TRACE_END();
+    }
+    void outputProblem(std::ostream& out) override {
+        out << mProblem << " (&emsp;)";
+        if(mReason.size()) {
+            out << " 原因/例子：";
+            outputBlank(mReason, out);
+        }
+    }
+    void outputAnswer(std::ostream& out) override {
+        out << (mAnswer ? "√" : "X");
+        if(mReason.size()) {
+            out << " ";
+            for(auto rea : mReason)
+                out << rea << " ";
+        }
     }
 };
 

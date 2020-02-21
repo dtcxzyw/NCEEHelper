@@ -2,13 +2,20 @@
  * Markdown PDF CSS
  */
 
+p {
+	margin-block-start:5px;
+	margin-block-end: 5px;
+}
+
 body {
 	font-family: "Microsoft YaHei UI Regular";
 	font-size: 14px;
 	padding: 0 12px;
-	line-height: 19.5px;
+	line-height: 16px;
 	word-wrap: break-word;
+	word-break:break-all;
 	overflow: auto;
+
 }
 
 pre {

@@ -10,6 +10,7 @@ bool getJudge(bool& quit);
 std::vector<String> splitAnswer(const String& str);
 bool compareAnswer(const std::vector<String>& stdAns,
                    const std::vector<String>& usrAns, bool& quit);
+void outputBlank(const std::vector<String>& ans, std::ostream& out);
 void checkStatus(UErrorCode status);
 #define CHECKSTATUS()  \
     BUS_TRACE_POINT(); \

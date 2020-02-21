@@ -22,4 +22,18 @@ public:
     virtual GUIDTable getTable() = 0;
     virtual TestResult test(GUID kpID) = 0;
     virtual std::string summary() = 0;
+    virtual void outputProblem(GUID id, std::ostream& out) {
+        BUS_MODULE_NAME("NCEEHelper.KnowledgeLibrary");
+        BUS_TRACE_BEG() {
+            BUS_TRACE_THROW(std::logic_error("Not implemented."));
+        }
+        BUS_TRACE_END();
+    }
+    virtual void outputAnswer(GUID id, std::ostream& out) {
+        BUS_MODULE_NAME("NCEEHelper.KnowledgeLibrary");
+        BUS_TRACE_BEG() {
+            BUS_TRACE_THROW(std::logic_error("Not implemented."));
+        }
+        BUS_TRACE_END();
+    }
 };

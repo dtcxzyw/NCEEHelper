@@ -280,6 +280,13 @@ public:
     std::vector<Ratio> analyse() override {
         return mAResults;
     }
+    double getAcc(GUID guid) override {
+        const auto& his = mHistory[guid];
+        if(his.testCnt)
+            return static_cast<double>(his.passCnt) / his.testCnt;
+        else
+            return -1.0;
+    }
 };
 
 std::shared_ptr<Bus::ModuleFunctionBase>

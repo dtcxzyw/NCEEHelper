@@ -93,3 +93,13 @@ bool compareAnswer(const std::vector<String>& stdAns,
         return true;
     }
 }
+
+void outputBlank(const std::vector<String>& ans, std::ostream& out) {
+    out << " ";
+    for(auto&& str : ans) {
+        for(size_t i = 0; i < str.length(); ++i)
+            out << "__";
+        out << "_";
+    }
+    out << " ";
+}

@@ -495,7 +495,7 @@ public:
     explicit WordCast(Bus::ModuleInstance& instance)
         : KnowledgeLibrary(instance) {}
 
-    void load(const fs::path& dataBase) {
+    void load(const fs::path& dataBase) override {
         BUS_TRACE_BEG() {
             mFillCnt = 0;
             mDataBase = dataBase / "English";
@@ -523,13 +523,13 @@ public:
         }
         BUS_TRACE_END();
     }
-    GUIDTable getTable() {
+    GUIDTable getTable() override {
         GUIDTable res;
         for(auto&& x : mKPS)
             res.emplace_back(x.first);
         return res;
     }
-    TestResult test(GUID kpID) {
+    TestResult test(GUID kpID) override {
         BUS_TRACE_BEG() {
             TestResult res;
             res.kpID = { kpID };
@@ -541,7 +541,7 @@ public:
         }
         BUS_TRACE_END();
     }
-    std::string summary() {
+    std::string summary() override {
         std::stringstream ss;
         using Clock = fs::file_time_type::clock;
         ss << "Cast.json count: " << mFillCnt << std::endl;
@@ -561,7 +561,7 @@ public:
     explicit ReadWord(Bus::ModuleInstance& instance)
         : KnowledgeLibrary(instance) {}
 
-    void load(const fs::path& dbp) {
+    void load(const fs::path& dbp) override {
         BUS_TRACE_BEG() {
             fs::path dataPath = dbp / "English" / "ECDICTData";
             py::module::import("sys").attr("path").attr("append")(
@@ -591,13 +591,13 @@ public:
         }
         BUS_TRACE_END();
     }
-    GUIDTable getTable() {
+    GUIDTable getTable() override {
         GUIDTable res;
         for(auto&& k : mRWS)
             res.emplace_back(k.first);
         return res;
     }
-    TestResult test(GUID kpID) {
+    TestResult test(GUID kpID) override {
         BUS_TRACE_BEG() {
             TestResult res;
             res.kpID = { kpID };
@@ -622,7 +622,7 @@ public:
         }
         BUS_TRACE_END();
     }
-    std::string summary() {
+    std::string summary() override {
         std::stringstream ss;
         ss << "Word count:" << mRWS.size() << std::endl;
         return ss.str();

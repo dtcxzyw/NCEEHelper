@@ -12,6 +12,8 @@ makeTestDriver(Bus::ModuleInstance& instance);
 std::shared_ptr<Bus::ModuleFunctionBase>
 makeAnalyser(Bus::ModuleInstance& instance);
 std::shared_ptr<Bus::ModuleFunctionBase>
+makePrinter(Bus::ModuleInstance& instance);
+std::shared_ptr<Bus::ModuleFunctionBase>
 makeFillTester(Bus::ModuleInstance& instance);
 std::shared_ptr<Bus::ModuleFunctionBase>
 makeJudgeTester(Bus::ModuleInstance& instance);
@@ -36,24 +38,26 @@ public:
         if(api == TestEngine::getInterface())
             return { "ImportanceSampler" };
         if(api == Command::getInterface())
-            return { "TestDriver", "Analyser" };
+            return { "TestDriver", "Analyser", "Printer" };
         if(api == Tester::getInterface())
             return { "FillTester", "JudgeTester" };
         return {};
     }
     std::shared_ptr<Bus::ModuleFunctionBase> instantiate(Name name) override {
-        if(name == "JsonConfig")
-            return makeJsonConfig(*this);
-        if(name == "ImportanceSampler")
-            return makeISTE(*this);
         if(name == "FillTester")
             return makeFillTester(*this);
         if(name == "JudgeTester")
             return makeJudgeTester(*this);
+        if(name == "JsonConfig")
+            return makeJsonConfig(*this);
+        if(name == "ImportanceSampler")
+            return makeISTE(*this);
         if(name == "TestDriver")
             return makeTestDriver(*this);
         if(name == "Analyser")
             return makeAnalyser(*this);
+        if(name == "Printer")
+            return makePrinter(*this);
         return nullptr;
     }
 };
