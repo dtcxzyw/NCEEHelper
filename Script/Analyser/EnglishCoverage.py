@@ -79,8 +79,8 @@ def getWordnetPos(treebank_tag):
         return nltk.corpus.wordnet.NOUN
 
 
-#wordDictName = "readword"
-wordDictName = "zgk"
+wordDictName = "readword"
+#wordDictName = "zgk"
 
 wordDict = ReadWordDict.Dict(
     "../../DataBase/English/ECDICTData/"+wordDictName+".db").dumps()
@@ -142,12 +142,12 @@ def count(dirs):
             cnt += 1
             for word in nstra:
                 stra.append(word)
-            print("hit {} miss {}".format(hit, miss))
+            print("count {} hit {} miss {}".format(cnt, hit, miss))
             print("coverage {:.2f}%".format(hit*100.0/(hit+miss+1)))
             print("process {:.2f}%".format(cnt*100.0/tot))
 
     print("Done")
-    print("hit {} miss {}".format(hit, miss))
+    print("count {} hit {} miss {}".format(tot, hit, miss))
     print("coverage {}%".format(hit*100.0/(hit+miss+1)))
 
     stopwords = [line.strip() for line in open(
