@@ -42,8 +42,10 @@ public:
     explicit TestDriver(Bus::ModuleInstance& instance) : Command(instance) {}
     int doCommand(int argc, char** argv) override {
         BUS_TRACE_BEG() {
-            if(argc != 3)
-                BUS_TRACE_THROW(std::logic_error("Bad arguments"));
+            if(argc != 4)
+                BUS_TRACE_THROW(
+                    std::logic_error("Bad arguments(KnowledgeLibrary "
+                                     "TestEngine default/master)"));
             auto klib = system().instantiateByName<KnowledgeLibrary>(argv[1]);
             if(!klib)
                 BUS_TRACE_THROW(std::runtime_error(
@@ -69,7 +71,8 @@ public:
             fs::create_directory(hisPath);
             hisPath /= argv[1];
             fs::create_directory(hisPath);
-            eng->init(hisPath, klib->getTable());
+            eng->init(hisPath, klib->getTable(),
+                      std::string(argv[4]) == "master");
             std::cout << eng->summary() << std::endl;
             testImpl(klib, eng);
             return EXIT_SUCCESS;

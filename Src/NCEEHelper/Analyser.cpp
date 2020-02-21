@@ -34,7 +34,7 @@ public:
             klib->load(dataBaseRoot);
             std::cout << klib->summary() << std::endl;
             fs::path hisPath = historyRoot / argv[2] / argv[1];
-            eng->init(hisPath, klib->getTable());
+            eng->init(hisPath, klib->getTable(), false);
             auto res = eng->analyse();
             fs::path outputPath =
                 fs::path("Results") / (std::string(argv[1]) + ".log");

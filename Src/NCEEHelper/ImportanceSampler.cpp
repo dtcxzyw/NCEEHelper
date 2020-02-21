@@ -98,10 +98,9 @@ private:
         }
         BUS_TRACE_END();
     }
-    void buildAccBuffer() {
-        mAccBuffer.resize(mHistory.size());
+    void buildAccBuffer(bool masterMode) {
+        mAccBuffer.clear();
         double sum = 0.0;
-        size_t idx = 0;
         for(auto& key : mHistory) {
             TestHistory& his = key.second;
             // accuracy 60%
@@ -125,17 +124,18 @@ private:
                 mNew.emplace_back(key.first);
             }
             his.weight = weight;
-            sum += weight;
-            mAccBuffer[idx].first = key.first;
-            mAccBuffer[idx].second = sum;
-            ++idx;
+            if((!masterMode) || (his.lastHistory & 7U) != 7U) {
+                sum += weight;
+                mAccBuffer.emplace_back(key.first, sum);
+            }
         }
     }
 
 public:
     explicit ImportanceSampler(Bus::ModuleInstance& instance)
         : TestEngine(instance) {}
-    void init(const fs::path& history, const GUIDTable& table) override {
+    void init(const fs::path& history, const GUIDTable& table,
+              bool masterMode) override {
         BUS_TRACE_BEG() {
             if(table.empty())
                 BUS_TRACE_THROW(std::logic_error("No knowledge point!!!"));
@@ -160,7 +160,7 @@ public:
                 loadRecord(log);
                 mAResults.emplace_back(analyseHistory());
             }
-            buildAccBuffer();
+            buildAccBuffer(masterMode);
             mRNG.seed(Clock::now().time_since_epoch().count());
             ss << ".log";
             mOutputPath = history / ss.str();

@@ -16,7 +16,8 @@ public:
         return "NCEEHelper.TestEngine";
     }
 
-    virtual void init(const fs::path& history, const GUIDTable& table) = 0;
+    virtual void init(const fs::path& history, const GUIDTable& table,
+                      bool masterMode) = 0;
     virtual GUID sampleTest() = 0;
     virtual std::string summary() = 0;
     virtual void recordTestResult(TestResult res) = 0;
