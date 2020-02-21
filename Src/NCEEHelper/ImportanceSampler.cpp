@@ -20,7 +20,7 @@ class ImportanceSampler final : public TestEngine {
 private:
     std::unordered_map<GUID, TestHistory, GUIDHasher> mHistory;
     std::vector<std::pair<GUID, double>> mAccBuffer;
-    std::mt19937_64 mRNG;
+    std::random_device mRNG;
     std::unique_ptr<std::ofstream> mOutput;
     fs::path mOutputPath;
     uint64_t mCurrent, mInvalid, mValid;
@@ -176,7 +176,10 @@ public:
                 mAResults.emplace_back(analyseHistory());
             }
             buildAccBuffer(masterMode);
-            mRNG.seed(Clock::now().time_since_epoch().count());
+            reporter().apply(ReportLevel::Debug,
+                             "random_device entropy=" +
+                                 std::to_string(mRNG.entropy()),
+                             BUS_DEFSRCLOC());
             ss << ".log";
             mOutputPath = history / ss.str();
             if(mNew.size() > static_cast<size_t>(100))
