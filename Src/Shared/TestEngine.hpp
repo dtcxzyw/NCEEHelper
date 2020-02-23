@@ -3,7 +3,7 @@
 
 struct Ratio final {
     uint64_t count;
-    double accuracy, coverage, master;
+    double accuracy, coverage, master, emaster;
 };
 
 class TestEngine : public Bus::ModuleFunctionBase {

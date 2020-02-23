@@ -41,7 +41,8 @@ public:
             std::ofstream out(outputPath);
             for(auto entry : res)
                 out << entry.count << " " << entry.accuracy << " "
-                    << entry.coverage << " " << entry.master << std::endl;
+                    << entry.coverage << " " << entry.master << " "
+                    << entry.emaster << std::endl;
             std::cout << "->" << outputPath << std::endl;
             return EXIT_SUCCESS;
         }

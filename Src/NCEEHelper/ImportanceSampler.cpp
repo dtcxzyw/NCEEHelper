@@ -31,12 +31,15 @@ private:
             Ratio res{ 0U, 0.0, 0.0, 0.0 };
             if(mHistory.empty())
                 return res;
-            uint32_t pass = 0, test = 0, coverage = 0, master = 0;
+            uint32_t pass = 0, test = 0, coverage = 0, master = 0, m1 = 0,
+                     m2 = 0;
             for(auto&& x : mHistory) {
                 TestHistory& his = x.second;
                 pass += his.passCnt, test += his.testCnt;
                 coverage += (his.testCnt != 0);
                 master += ((his.lastHistory & 7U) == 7U);
+                m1 += ((his.lastHistory & 1U) == 1U);
+                m2 += ((his.lastHistory & 3U) == 3U);
             }
             res.count = mValid;
             double tot = static_cast<double>(mHistory.size());
@@ -44,6 +47,7 @@ private:
                 res.accuracy = pass / static_cast<double>(test);
             res.coverage = coverage / tot;
             res.master = master / tot;
+            res.emaster = (master + m1 + m2) / (3 * tot);
             return res;
         }
         BUS_TRACE_END();
@@ -224,23 +228,24 @@ public:
     std::string summary() override {
         BUS_TRACE_BEG() {
             uint32_t pass = 0, test = static_cast<uint32_t>(mValid),
-                     coverage = 0, master = 0;
+                     coverage = 0, master = 0, m1 = 0, m2 = 0;
             std::vector<std::pair<double, GUID>> top;
             for(auto&& x : mHistory) {
                 TestHistory& his = x.second;
                 pass += his.passCnt;
                 coverage += (his.testCnt != 0);
                 master += ((his.lastHistory & 7U) == 7U);
+                m1 += ((his.lastHistory & 1U) == 1U);
+                m2 += ((his.lastHistory & 3U) == 3U);
                 if(his.testCnt)
                     top.push_back(std::make_pair(his.weight, x.first));
             }
             std::stringstream ss;
-            ss << "TestCount: " << test << " PassCount: " << pass
-               << " Invalid: " << mInvalid << " Accuracy: ";
             ss.precision(2);
+            ss << std::fixed << "TestCount: " << test << " PassCount: " << pass
+               << " Invalid: " << mInvalid << " Accuracy: ";
             if(test)
-                ss << std::fixed << (static_cast<double>(pass) / test) * 100.0
-                   << "%";
+                ss << (static_cast<double>(pass) / test) * 100.0 << "%";
             else
                 ss << "N/A";
             ss << std::endl;
@@ -248,6 +253,9 @@ public:
                << coverage << "/" << mHistory.size() << ")" << std::endl;
             ss << "Master: " << (master * 100.0 / mHistory.size()) << "% ("
                << master << "/" << mHistory.size() << ")" << std::endl;
+            ss << "E[Master]: "
+               << ((master + m1 + m2) * 100.0 / (3 * mHistory.size())) << "%"
+               << std::endl;
             std::sort(top.rbegin(), top.rend());
             ss << "Top 10" << std::endl;
             size_t msiz = std::min(10ULL, top.size());

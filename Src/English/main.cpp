@@ -604,7 +604,7 @@ public:
             res.push_back(mNodes[pos].ch);
             pos = p;
         }
-        if(res.size() > 6 || (siz == res.size()))
+        if(res.size() > 6 || (siz <= res.size()+3))
             return {};
         std::reverse(res.begin(), res.end());
         return res;

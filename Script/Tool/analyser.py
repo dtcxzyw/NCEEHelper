@@ -20,6 +20,7 @@ def generate(klib):
     A = []
     C = []
     M = []
+    E = []
     with open(path, encoding="utf-8") as f:
         for line in f:
             ratio = line.split()
@@ -27,6 +28,7 @@ def generate(klib):
             A.append(float(ratio[1]))
             C.append(float(ratio[2]))
             M.append(float(ratio[3]))
+            E.append(float(ratio[4]))
     ct = time.localtime(time.time())
     plt.title("{} {}.{}.{}".format(klib, ct.tm_year, ct.tm_mon, ct.tm_mday))
     plt.xlabel("Count")
@@ -35,6 +37,7 @@ def generate(klib):
     plt.plot(X, A, label="Accuracy", marker=".")
     plt.plot(X, C, label="Coverage", marker=".")
     plt.plot(X, M, label="Master", marker='.')
+    plt.plot(X, E, label="E[Master]", marker='.')
     plt.legend()
     plt.savefig("ARes/{}.png".format(klib))
     plt.close('all')
