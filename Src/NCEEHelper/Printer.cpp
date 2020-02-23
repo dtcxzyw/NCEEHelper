@@ -47,7 +47,7 @@ public:
             uint32_t idx = 0;
             for(auto id : klib->getTable()) {
                 double acc = eng->getAcc(id);
-                out << (++idx) << ". [";
+                out << (++idx) << ".[";
                 if(acc < 0.0)
                     out << "N/A";
                 else

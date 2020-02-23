@@ -3,19 +3,26 @@
  */
 
 p {
-	margin-block-start:5px;
-	margin-block-end: 5px;
+	margin-block-start:2px;
+	margin-block-end: 2px;
 }
 
 body {
 	font-family: "Microsoft YaHei UI Regular";
-	font-size: 14px;
-	padding: 0 12px;
-	line-height: 16px;
+	font-size: 15px;
+	padding: 0 0px;
+	line-height: 19px;
 	word-wrap: break-word;
 	word-break:break-all;
 	overflow: auto;
+	margin-left: 0px;
+}
 
+@page {
+	margin-left: 25px;
+	margin-right: 25px;
+	margin-top: 25px;
+	/*margin-bottom: 26px;*/
 }
 
 pre {

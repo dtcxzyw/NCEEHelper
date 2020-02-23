@@ -8,6 +8,8 @@
 #pragma warning(push, 0)
 #include <crossguid/guid.hpp>
 #include <pybind11/embed.h>
+#define GUID_DEFINED
+#include <rang.hpp>
 #include <unicode/unistr.h>
 #include <unicode/ustream.h>
 namespace py = pybind11;
@@ -549,12 +551,73 @@ public:
     }
 };
 
-struct ReadWordEntry final {
-    String trans, word, pos;
+class Trie final {
+private:
+    struct Node final {
+        uint32_t nxt[26];
+        uint32_t count, pre, depth;
+        char ch;
+    };
+    std::vector<Node> mNodes;
+    uint32_t getChild(uint32_t pid, char ch) {
+        uint32_t id = mNodes[pid].nxt[ch - 'a'];
+        if(!id) {
+            id = mNodes.size();
+            mNodes.push_back(mNodes.front());
+            mNodes[pid].nxt[ch - 'a'] = id;
+            Node& node = mNodes.back();
+            node.ch = ch, node.pre = pid, node.depth = mNodes[pid].depth + 1;
+        }
+        return id;
+    }
+
+public:
+    Trie() {
+        mNodes.resize(2);
+        memset(mNodes.data(), 0, 2 * sizeof(Node));
+    }
+    uint32_t insert(const std::string& str) {
+        uint32_t cp = 1U;
+        for(auto ch : str) {
+            if(!isalpha(ch))
+                return 0U;
+            ch = tolower(ch);
+            cp = getChild(cp, ch);
+            ++mNodes[cp].count;
+        }
+        return cp;
+    }
+    std::string pre(uint32_t pos) const {
+        if(pos == 0 || mNodes[pos].count != 1U || mNodes[pos].depth < 5)
+            return {};
+        uint32_t siz = mNodes[pos].depth;
+        while(mNodes[pos].depth > 3) {
+            uint32_t p = mNodes[pos].pre;
+            if(mNodes[p].count == 1U)
+                pos = p;
+            else
+                break;
+        }
+        std::string res;
+        while(pos != 1U) {
+            uint32_t p = mNodes[pos].pre;
+            res.push_back(mNodes[pos].ch);
+            pos = p;
+        }
+        if(res.size() > 6 || (siz == res.size()))
+            return {};
+        std::reverse(res.begin(), res.end());
+        return res;
+    }
 };
 
 class ReadWord final : public KnowledgeLibrary {
 private:
+    struct ReadWordEntry final {
+        String trans, pos;
+        std::string pre, word;
+        uint32_t ptr;
+    };
     std::unordered_map<GUID, ReadWordEntry, GUIDHasher> mRWS;
 
 public:
@@ -570,6 +633,7 @@ public:
             py::object dataBase = dict.attr("StarDict")(
                 py::str{ (dataPath / "readword.db").string() });
             BUS_TRACE_POINT();
+            Trie trie;
             for(auto ref : dataBase) {
                 auto id = *ref.begin();
                 auto info = dataBase.attr("query")(id);
@@ -584,10 +648,12 @@ public:
                 if(!pos.is_none())
                     entry.pos =
                         String(pos.cast<std::string>().c_str(), "utf-8");
-                if(!wt.is_none())
-                    entry.word =
-                        String(wt.cast<std::string>().c_str(), "utf-8");
+                entry.word = wt.cast<std::string>();
+                entry.ptr = trie.insert(entry.word);
             }
+            BUS_TRACE_POINT();
+            for(auto&& entry : mRWS)
+                entry.second.pre = trie.pre(entry.second.ptr);
         }
         BUS_TRACE_END();
     }
@@ -609,6 +675,9 @@ public:
             if(line == "#quit")
                 return res;
             std::cout << entry.trans << std::endl;
+            if(entry.pre.size())
+                std::cout << "Trie prefix:" << rang::fg::yellow << entry.pre
+                          << rang::fg::reset << std::endl;
             while(true) {
                 std::getline(std::cin, line);
                 if(line == "#quit")
