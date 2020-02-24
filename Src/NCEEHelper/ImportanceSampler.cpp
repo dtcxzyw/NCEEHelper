@@ -136,7 +136,8 @@ private:
                     mNew.emplace_back(key.first);
                 }
                 his.weight = weight;
-                if((!masterMode) || (his.lastHistory & 7U) != 7U) {
+                if((!masterMode) ||
+                   ((his.lastHistory & 7U) != 7U && his.passCnt)) {
                     sum += weight;
                     mAccBuffer.emplace_back(key.first, sum);
                 }
