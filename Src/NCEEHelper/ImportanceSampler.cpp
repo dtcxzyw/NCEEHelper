@@ -36,7 +36,7 @@ private:
             for(auto&& x : mHistory) {
                 TestHistory& his = x.second;
                 pass += his.passCnt, test += his.testCnt;
-                coverage += (his.testCnt != 0);
+                coverage += (his.passCnt != 0);
                 master += ((his.lastHistory & 7U) == 7U);
                 m1 += ((his.lastHistory & 1U) == 1U);
                 m2 += ((his.lastHistory & 3U) == 3U);
@@ -131,7 +131,7 @@ private:
                     weight *= std::max(
                         0.005, 1.0 - his.passCnt / (his.testCnt + 0.001));
                 // coverage
-                if(his.testCnt == 0) {
+                if(his.passCnt == 0) {
                     weight = 100.0;
                     mNew.emplace_back(key.first);
                 }
@@ -234,7 +234,7 @@ public:
             for(auto&& x : mHistory) {
                 TestHistory& his = x.second;
                 pass += his.passCnt;
-                coverage += (his.testCnt != 0);
+                coverage += (his.passCnt != 0);
                 master += ((his.lastHistory & 7U) == 7U);
                 m1 += ((his.lastHistory & 1U) == 1U);
                 m2 += ((his.lastHistory & 3U) == 3U);
