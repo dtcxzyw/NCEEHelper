@@ -65,11 +65,13 @@ public:
             } else {
                 std::cout << rang::fg::red << String("正确答案为", "utf8")
                           << (mAnswer ? "T" : "F") << std::endl;
-                std::cout << rang::fg::yellow
-                          << String("原因/例子有：", "utf8");
-                for(auto rea : mReason)
-                    std::cout << rea << " ";
-                std::cout << rang::fg::reset << std::endl;
+                if(mReason.size()) {
+                    std::cout << rang::fg::yellow
+                              << String("原因/例子有：", "utf8");
+                    for(auto rea : mReason)
+                        std::cout << rea << " ";
+                    std::cout << rang::fg::reset << std::endl;
+                }
                 return 0;
             }
         }
