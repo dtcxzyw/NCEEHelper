@@ -187,6 +187,9 @@ public:
                              BUS_DEFSRCLOC());
             ss << ".log";
             mOutputPath = history / ss.str();
+            reporter().apply(ReportLevel::Debug,
+                             "new size: " + std::to_string(mNew.size()),
+                             BUS_DEFSRCLOC());
             if(mNew.size() > static_cast<size_t>(100))
                 mNew.resize(static_cast<size_t>(100));
         }
