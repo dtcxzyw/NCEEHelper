@@ -580,7 +580,7 @@ public:
         uint32_t cp = 1U;
         for(auto ch : str) {
             if(!isalpha(ch))
-                return 0U;
+                continue;
             ch = tolower(ch);
             cp = getChild(cp, ch);
             ++mNodes[cp].count;
@@ -588,9 +588,8 @@ public:
         return cp;
     }
     std::string pre(uint32_t pos) const {
-        if(pos == 0 || mNodes[pos].count != 1U || mNodes[pos].depth < 5)
+        if(pos == 0 || mNodes[pos].count > 3U || mNodes[pos].depth < 5)
             return {};
-        uint32_t siz = mNodes[pos].depth;
         while(mNodes[pos].depth > 3) {
             uint32_t p = mNodes[pos].pre;
             if(mNodes[p].count <= 3U)
@@ -650,8 +649,13 @@ public:
                 entry.ptr = trie.insert(entry.word);
             }
             BUS_TRACE_POINT();
-            for(auto&& entry : mRWS)
+            for(auto&& entry : mRWS) {
                 entry.second.pre = trie.pre(entry.second.ptr);
+                /*
+                std::cout << entry.second.word << " -> " << entry.second.pre
+                          << "#" << entry.second.ptr << std::endl;
+                */
+            }
         }
         BUS_TRACE_END();
     }
