@@ -593,7 +593,7 @@ public:
         uint32_t siz = mNodes[pos].depth;
         while(mNodes[pos].depth > 3) {
             uint32_t p = mNodes[pos].pre;
-            if(mNodes[p].count == 1U)
+            if(mNodes[p].count <= 3U)
                 pos = p;
             else
                 break;
@@ -604,8 +604,6 @@ public:
             res.push_back(mNodes[pos].ch);
             pos = p;
         }
-        if(res.size() > 6 || (siz <= res.size()+3))
-            return {};
         std::reverse(res.begin(), res.end());
         return res;
     }
