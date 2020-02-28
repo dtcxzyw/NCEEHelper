@@ -241,7 +241,7 @@ public:
                 master += ((his.lastHistory & 7U) == 7U);
                 m1 += ((his.lastHistory & 1U) == 1U);
                 m2 += ((his.lastHistory & 3U) == 3U);
-                if(his.testCnt)
+                if(his.passCnt)
                     top.push_back(std::make_pair(his.weight, x.first));
             }
             std::stringstream ss;
