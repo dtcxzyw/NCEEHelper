@@ -1,5 +1,6 @@
 #include "../Shared/TestEngine.hpp"
 #include <chrono>
+#include <deque>
 #include <fstream>
 #include <random>
 #include <set>
@@ -18,7 +19,9 @@ struct TestHistory final {
 
 class ImportanceSampler final : public TestEngine {
 private:
+    static constexpr size_t queueSize = 1500ULL;
     std::unordered_map<GUID, TestHistory, GUIDHasher> mHistory;
+    std::deque<bool> mQueue;
     std::vector<std::pair<GUID, double>> mAccBuffer;
     std::random_device mRNG;
     std::unique_ptr<std::ofstream> mOutput;
@@ -28,14 +31,15 @@ private:
     std::vector<GUID> mNew;
     Ratio analyseHistory() {
         BUS_TRACE_BEG() {
-            Ratio res{ 0U, 0.0, 0.0, 0.0 };
+            Ratio res{ 0U, 0.0, 0.0, 0.0, 0.0 };
             if(mHistory.empty())
                 return res;
-            uint32_t pass = 0, test = 0, coverage = 0, master = 0, m1 = 0,
-                     m2 = 0;
+            uint32_t pass = 0, test = static_cast<uint32_t>(mQueue.size()),
+                     coverage = 0, master = 0, m1 = 0, m2 = 0;
+            for(auto&& x : mQueue)
+                pass += x;
             for(auto&& x : mHistory) {
                 TestHistory& his = x.second;
-                pass += his.passCnt, test += his.testCnt;
                 coverage += (his.passCnt != 0);
                 master += ((his.lastHistory & 7U) == 7U);
                 m1 += ((his.lastHistory & 1U) == 1U);
@@ -99,6 +103,9 @@ private:
                         ((his.lastHistory << 1) | static_cast<uint32_t>(res));
                     his.lastTime = day;
                     ++mValid;
+                    mQueue.push_back(res);
+                    while(mQueue.size() > queueSize)
+                        mQueue.pop_front();
                 } else
                     ++mInvalid;
             }
