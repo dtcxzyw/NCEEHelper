@@ -197,6 +197,7 @@ public:
             reporter().apply(ReportLevel::Debug,
                              "new size: " + std::to_string(mNew.size()),
                              BUS_DEFSRCLOC());
+            std::shuffle(mNew.begin(), mNew.end(), mRNG);
             if(mNew.size() > static_cast<size_t>(100))
                 mNew.resize(static_cast<size_t>(100));
         }
@@ -207,6 +208,7 @@ public:
             if(mAccBuffer.empty() && mNew.empty())
                 BUS_TRACE_THROW(std::runtime_error("Empty library."));
             GUID res{};
+            bool isSample = false;
             if(mNew.empty()) {
                 std::uniform_real_distribution urd(0.0,
                                                    mAccBuffer.back().second);
@@ -219,16 +221,20 @@ public:
                                      });
                 res = (iter == mAccBuffer.end() ? mAccBuffer.back().first :
                                                   iter->first);
+                isSample = true;
             } else {
                 res = mNew.back();
                 mNew.pop_back();
             }
             std::cout << GUID2Str(res) << std::endl;
             TestHistory& his = mHistory[res];
-            std::cout << "Weight:" << his.weight << "("
-                      << (his.weight * 100.0 /
-                          (mAccBuffer.back().second + 1e-5))
-                      << "%) History:";
+            std::cout << "Weight:" << his.weight;
+            if(isSample)
+                std::cout << "("
+                          << (his.weight * 100.0 /
+                              (mAccBuffer.back().second + 1e-5))
+                          << "%)";
+            std::cout << " History:";
             for(uint32_t i = 0; i < std::min(32U, his.testCnt); ++i)
                 std::cout << ((his.lastHistory >> i) & 1 ? 'T' : 'F');
             std::cout << " Time:" << his.lastTime << " days ago" << std::endl;

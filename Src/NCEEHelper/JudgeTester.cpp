@@ -64,7 +64,8 @@ public:
                 return 1;
             } else {
                 std::cout << rang::fg::red << String("正确答案为", "utf8")
-                          << (mAnswer ? "T" : "F") << std::endl;
+                          << (mAnswer ? "T" : "F") << rang::fg::reset
+                          << std::endl;
                 if(mReason.size()) {
                     std::cout << rang::fg::yellow
                               << String("原因/例子有：", "utf8");
