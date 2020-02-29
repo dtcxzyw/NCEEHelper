@@ -22,8 +22,9 @@ private:
     static constexpr size_t queueSize = 1500ULL;
     std::unordered_map<GUID, TestHistory, GUIDHasher> mHistory;
     std::deque<bool> mQueue;
-    std::vector<std::pair<GUID, double>> mAccBuffer;
-    std::random_device mRNG;
+    std::vector<GUID> mMap;
+    std::discrete_distribution<size_t> mDistrib;
+    std::mt19937_64 mRNG;
     std::unique_ptr<std::ofstream> mOutput;
     fs::path mOutputPath;
     uint64_t mCurrent, mInvalid, mValid;
@@ -117,8 +118,8 @@ private:
             if(masterMode)
                 reporter().apply(ReportLevel::Debug, "masterMode ON",
                                  BUS_DEFSRCLOC());
-            mAccBuffer.clear();
-            double sum = 0.0;
+            std::vector<double> weights;
+            mMap.clear();
             for(auto& key : mHistory) {
                 TestHistory& his = key.second;
                 // accuracy 60%
@@ -145,14 +146,15 @@ private:
                 his.weight = weight;
                 if((!masterMode) ||
                    ((his.lastHistory & 7U) != 7U && his.passCnt)) {
-                    sum += weight;
-                    mAccBuffer.emplace_back(key.first, sum);
+                    mMap.emplace_back(key.first);
+                    weights.emplace_back(weight);
                 }
             }
+            mDistrib = { weights.begin(), weights.end() };
             if(masterMode)
                 reporter().apply(ReportLevel::Debug,
                                  "sublibrary size:" +
-                                     std::to_string(mAccBuffer.size()),
+                                     std::to_string(mMap.size()),
                                  BUS_DEFSRCLOC());
         }
         BUS_TRACE_END();
@@ -179,62 +181,50 @@ public:
             mCurrent =
                 std::chrono::system_clock::now().time_since_epoch().count();
             mInvalid = mValid = 0;
-            std::stringstream ss;
-            ss << std::hex << std::uppercase << mCurrent;
-            reporter().apply(ReportLevel::Info, "Timestamp " + ss.str(),
-                             BUS_DEFSRCLOC());
+            {
+                std::stringstream ss;
+                ss << std::hex << std::uppercase << mCurrent;
+                reporter().apply(ReportLevel::Info, "Timestamp " + ss.str(),
+                                 BUS_DEFSRCLOC());
+                ss << ".log";
+                mOutputPath = history / ss.str();
+            }
             for(auto log : logs) {
                 loadRecord(log);
                 mAResults.emplace_back(analyseHistory());
             }
             buildAccBuffer(masterMode);
+            /*
             reporter().apply(ReportLevel::Debug,
                              "random_device entropy=" +
                                  std::to_string(mRNG.entropy()),
                              BUS_DEFSRCLOC());
-            ss << ".log";
-            mOutputPath = history / ss.str();
+                             */
             reporter().apply(ReportLevel::Debug,
                              "new size: " + std::to_string(mNew.size()),
                              BUS_DEFSRCLOC());
-            std::shuffle(mNew.begin(), mNew.end(), mRNG);
-            if(mNew.size() > static_cast<size_t>(100))
-                mNew.resize(static_cast<size_t>(100));
+            // std::shuffle(mNew.begin(), mNew.end(), mRNG);
+            std::random_device rdv;
+            mRNG.seed(std::seed_seq({ rdv() }));
+            if(mNew.size() > static_cast<size_t>(20))
+                mNew.resize(static_cast<size_t>(20));
         }
         BUS_TRACE_END();
     }
     GUID sampleTest() override {
         BUS_TRACE_BEG() {
-            if(mAccBuffer.empty() && mNew.empty())
+            if(mMap.empty() && mNew.empty())
                 BUS_TRACE_THROW(std::runtime_error("Empty library."));
             GUID res{};
-            bool isSample = false;
             if(mNew.empty()) {
-                std::uniform_real_distribution urd(0.0,
-                                                   mAccBuffer.back().second);
-                std::pair<GUID, double> key;
-                key.second = urd(mRNG);
-                auto iter =
-                    std::lower_bound(mAccBuffer.begin(), mAccBuffer.end(), key,
-                                     [](const auto& lhs, const auto& rhs) {
-                                         return lhs.second < rhs.second;
-                                     });
-                res = (iter == mAccBuffer.end() ? mAccBuffer.back().first :
-                                                  iter->first);
-                isSample = true;
+                res = mMap[mDistrib(mRNG)];
             } else {
                 res = mNew.back();
                 mNew.pop_back();
             }
             std::cout << GUID2Str(res) << std::endl;
             TestHistory& his = mHistory[res];
-            std::cout << "Weight:" << his.weight;
-            if(isSample)
-                std::cout << "("
-                          << (his.weight * 100.0 /
-                              (mAccBuffer.back().second + 1e-5))
-                          << "%)";
-            std::cout << " History:";
+            std::cout << "Weight:" << his.weight << " History:";
             for(uint32_t i = 0; i < std::min(32U, his.testCnt); ++i)
                 std::cout << ((his.lastHistory >> i) & 1 ? 'T' : 'F');
             std::cout << " Time:" << his.lastTime << " days ago" << std::endl;

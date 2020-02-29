@@ -36,6 +36,10 @@ public:
             fs::path hisPath = historyRoot / argv[2] / argv[1];
             eng->init(hisPath, klib->getTable(), false);
             auto res = eng->analyse();
+            Ratio empty{ 0U, 0.0, 0.0, 0.0, 0.0 };
+            if(res.size())
+                empty.accuracy = res.front().accuracy;
+            res.insert(res.begin(), empty);
             fs::path outputPath =
                 fs::path("Results") / (std::string(argv[1]) + ".log");
             std::ofstream out(outputPath);
