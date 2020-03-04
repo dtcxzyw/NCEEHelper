@@ -164,7 +164,7 @@ public:
     explicit ImportanceSampler(Bus::ModuleInstance& instance)
         : TestEngine(instance) {}
     void init(const fs::path& history, const GUIDTable& table,
-              bool masterMode) override {
+              TestMode mode) override {
         BUS_TRACE_BEG() {
             if(table.empty())
                 BUS_TRACE_THROW(std::logic_error("No knowledge point!!!"));
@@ -193,21 +193,32 @@ public:
                 loadRecord(log);
                 mAResults.emplace_back(analyseHistory());
             }
-            buildAccBuffer(masterMode);
-            /*
-            reporter().apply(ReportLevel::Debug,
-                             "random_device entropy=" +
-                                 std::to_string(mRNG.entropy()),
-                             BUS_DEFSRCLOC());
-                             */
-            reporter().apply(ReportLevel::Debug,
-                             "new size: " + std::to_string(mNew.size()),
-                             BUS_DEFSRCLOC());
-            // std::shuffle(mNew.begin(), mNew.end(), mRNG);
             std::random_device rdv;
             mRNG.seed(std::seed_seq({ rdv() }));
-            if(mNew.size() > static_cast<size_t>(20))
-                mNew.resize(static_cast<size_t>(20));
+            if(mode != TestMode::Review) {
+                buildAccBuffer(mode == TestMode::Master);
+                /*
+                reporter().apply(ReportLevel::Debug,
+                                 "random_device entropy=" +
+                                     std::to_string(mRNG.entropy()),
+                                 BUS_DEFSRCLOC());
+                                 */
+                reporter().apply(ReportLevel::Debug,
+                                 "new size: " + std::to_string(mNew.size()),
+                                 BUS_DEFSRCLOC());
+                // std::shuffle(mNew.begin(), mNew.end(), mRNG);
+                if(mNew.size() > static_cast<size_t>(20))
+                    mNew.resize(static_cast<size_t>(20));
+            } else {
+                for(auto&& his : mHistory)
+                    mNew.emplace_back(his.first);
+                std::sort(mNew.begin(), mNew.end(), [this](GUID lhs, GUID rhs) {
+                    return mHistory[lhs].lastTime < mHistory[rhs].lastTime;
+                });
+                for(auto&& his : mHistory)
+                    if((his.second.lastHistory & 7U) != 7U)
+                        mNew.emplace_back(his.first);
+            }
         }
         BUS_TRACE_END();
     }

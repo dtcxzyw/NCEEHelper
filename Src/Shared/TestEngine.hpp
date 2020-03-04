@@ -6,6 +6,8 @@ struct Ratio final {
     double accuracy, coverage, master, emaster;
 };
 
+enum class TestMode { Weight, Master, Review };
+
 class TestEngine : public Bus::ModuleFunctionBase {
 protected:
     explicit TestEngine(Bus::ModuleInstance& instance)
@@ -17,7 +19,7 @@ public:
     }
 
     virtual void init(const fs::path& history, const GUIDTable& table,
-                      bool masterMode) = 0;
+                      TestMode mode) = 0;
     virtual GUID sampleTest() = 0;
     virtual std::string summary() = 0;
     virtual void recordTestResult(TestResult res) = 0;

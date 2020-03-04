@@ -36,7 +36,7 @@ public:
             klib->load(dataBaseRoot);
             std::cout << klib->summary() << std::endl;
             fs::path hisPath = historyRoot / argv[2] / argv[1];
-            eng->init(hisPath, klib->getTable(), false);
+            eng->init(hisPath, klib->getTable(), TestMode::Weight);
             fs::path outputPath =
                 fs::path("Output") / (std::string(argv[1]) + ".md");
             std::ofstream out(outputPath);

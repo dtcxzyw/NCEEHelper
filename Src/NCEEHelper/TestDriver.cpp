@@ -7,6 +7,21 @@
 
 BUS_MODULE_NAME("NCEEHelper.Builtin.TestDriver");
 
+static TestMode getMode(const std::string& par) {
+    BUS_TRACE_BEG() {
+        static std::map<std::string, TestMode> table = {
+            { "master", TestMode::Master },
+            { "Default", TestMode::Weight },
+            { "Review", TestMode::Review }
+        };
+        auto iter = table.find(par);
+        if(iter == table.end())
+            BUS_TRACE_THROW(std::runtime_error("Bad mode " + par));
+        return iter->second;
+    }
+    BUS_TRACE_END();
+}
+
 static void testImpl(std::shared_ptr<KnowledgeLibrary> klib,
                      std::shared_ptr<TestEngine> eng) {
     BUS_TRACE_BEG() {
@@ -45,7 +60,7 @@ public:
             if(argc != 4)
                 BUS_TRACE_THROW(
                     std::logic_error("Bad arguments(KnowledgeLibrary "
-                                     "TestEngine default/master)"));
+                                     "TestEngine default/master/review)"));
             auto klib = system().instantiateByName<KnowledgeLibrary>(argv[1]);
             if(!klib)
                 BUS_TRACE_THROW(std::runtime_error(
@@ -71,8 +86,7 @@ public:
             fs::create_directory(hisPath);
             hisPath /= argv[1];
             fs::create_directory(hisPath);
-            eng->init(hisPath, klib->getTable(),
-                      std::string(argv[3]) == "master");
+            eng->init(hisPath, klib->getTable(), getMode(argv[3]));
             std::cout << eng->summary() << std::endl;
             testImpl(klib, eng);
             return EXIT_SUCCESS;

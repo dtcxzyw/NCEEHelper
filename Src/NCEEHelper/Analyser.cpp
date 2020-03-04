@@ -34,7 +34,7 @@ public:
             klib->load(dataBaseRoot);
             std::cout << klib->summary() << std::endl;
             fs::path hisPath = historyRoot / argv[2] / argv[1];
-            eng->init(hisPath, klib->getTable(), false);
+            eng->init(hisPath, klib->getTable(), TestMode::Weight);
             auto res = eng->analyse();
             Ratio empty{ 0U, 0.0, 0.0, 0.0, 0.0 };
             if(res.size())
