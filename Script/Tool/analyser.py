@@ -8,13 +8,7 @@ import matplotlib
 import time
 
 
-def generate(klib):
-    cmd = "cd ../../Bin && NCEEHelper.exe Analyser {} ImportanceSampler".format(
-        klib)
-    res = os.system(cmd)
-    if res != 0:
-        print("Failed to generate data for ", klib)
-        return
+def generateTest(klib):
     path = "../../Bin/Results/{}.log".format(klib)
     X = []
     A = []
@@ -23,12 +17,12 @@ def generate(klib):
     E = []
     with open(path, encoding="utf-8") as f:
         for line in f:
-            ratio = line.split()
-            X.append(float(ratio[0]))
-            A.append(float(ratio[1]))
-            C.append(float(ratio[2]))
-            M.append(float(ratio[3]))
-            E.append(float(ratio[4]))
+            data = line.split()
+            X.append(float(data[0]))
+            A.append(float(data[1]))
+            C.append(float(data[2]))
+            M.append(float(data[3]))
+            E.append(float(data[4]))
     ct = time.localtime(time.time())
     plt.title("{} {}.{}.{}".format(klib, ct.tm_year, ct.tm_mon, ct.tm_mday))
     plt.xlabel("Count")
@@ -41,6 +35,44 @@ def generate(klib):
     plt.legend()
     plt.savefig("ARes/{}.png".format(klib))
     plt.close('all')
+
+
+def generateTime(klib):
+    path = "../../Bin/Results/{}.res".format(klib)
+    X = []
+    A = []
+    cnt = 0
+    ticks = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            data = line.split()
+            px = int(data[0])
+            if px == 10000:
+                px = "never"
+            ticks.append(px)
+            cnt = cnt+1
+            X.append(cnt)
+            A.append(float(data[1]))
+    ct = time.localtime(time.time())
+    plt.title("{} {}.{}.{}".format(klib, ct.tm_year, ct.tm_mon, ct.tm_mday))
+    plt.xlabel("Date")
+    plt.ylabel("Ratio")
+    plt.ylim(0.0, 1.0)
+    plt.bar(X, A)
+    plt.xticks(X, ticks)
+    plt.savefig("ARes/{}-Time.png".format(klib))
+    plt.close('all')
+
+
+def generate(klib):
+    cmd = "cd ../../Bin && NCEEHelper.exe Analyser {} ImportanceSampler".format(
+        klib)
+    res = os.system(cmd)
+    if res != 0:
+        print("Failed to generate data for ", klib)
+        return
+    generateTest(klib)
+    generateTime(klib)
 
 
 if __name__ == "__main__":

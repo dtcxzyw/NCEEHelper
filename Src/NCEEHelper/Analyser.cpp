@@ -35,19 +35,30 @@ public:
             std::cout << klib->summary() << std::endl;
             fs::path hisPath = historyRoot / argv[2] / argv[1];
             eng->init(hisPath, klib->getTable(), TestMode::Weight);
-            auto res = eng->analyse();
-            Ratio empty{ 0U, 0.0, 0.0, 0.0, 0.0 };
-            if(res.size())
-                empty.accuracy = res.front().accuracy;
-            res.insert(res.begin(), empty);
-            fs::path outputPath =
-                fs::path("Results") / (std::string(argv[1]) + ".log");
-            std::ofstream out(outputPath);
-            for(auto entry : res)
-                out << entry.count << " " << entry.accuracy << " "
-                    << entry.coverage << " " << entry.master << " "
-                    << entry.emaster << std::endl;
-            std::cout << "->" << outputPath << std::endl;
+            auto [res, lastPass, all] = eng->analyse();
+            {
+                Ratio empty{ 0U, 0.0, 0.0, 0.0, 0.0 };
+                if(res.size())
+                    empty.accuracy = res.front().accuracy;
+                res.insert(res.begin(), empty);
+                fs::path outputPath =
+                    fs::path("Results") / (std::string(argv[1]) + ".log");
+                std::ofstream out(outputPath);
+                for(auto entry : res)
+                    out << entry.count << " " << entry.accuracy << " "
+                        << entry.coverage << " " << entry.master << " "
+                        << entry.emaster << std::endl;
+                std::cout << "->" << outputPath << std::endl;
+            }
+            {
+                fs::path outputPath =
+                    fs::path("Results") / (std::string(argv[1]) + ".res");
+                std::ofstream out(outputPath);
+                for(auto cnt : lastPass)
+                    out << cnt.first << " "
+                        << static_cast<double>(cnt.second) / all << std::endl;
+                std::cout << "->" << outputPath << std::endl;
+            }
             return EXIT_SUCCESS;
         }
         BUS_TRACE_END();

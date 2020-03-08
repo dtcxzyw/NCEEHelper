@@ -12,9 +12,11 @@ using Clock = std::chrono::high_resolution_clock;
 BUS_MODULE_NAME("NCEEHelper.Builtin.ImportanceSampler");
 
 struct TestHistory final {
-    uint32_t passCnt, testCnt, lastHistory, lastTime;
+    uint32_t passCnt, testCnt, lastHistory, lastPass;
     double weight;
-    TestHistory() : passCnt(0), testCnt(0), lastHistory(0), lastTime(0) {}
+    TestHistory()
+        : passCnt(0), testCnt(0), lastHistory(0), lastPass(10000),
+          weight(-1.0) {}
 };
 
 class ImportanceSampler final : public TestEngine {
@@ -102,7 +104,8 @@ private:
                     ++his.testCnt;
                     his.lastHistory =
                         ((his.lastHistory << 1) | static_cast<uint32_t>(res));
-                    his.lastTime = day;
+                    if(res)
+                        his.lastPass = day;
                     ++mValid;
                     mQueue.push_back(res);
                     while(mQueue.size() > queueSize)
@@ -130,7 +133,7 @@ private:
                 if(his.testCnt <= 3)
                     weight += 10.0 - his.testCnt * 3;
                 // time 10%
-                weight += std::min(his.lastTime, 20U) * 0.5;
+                weight += std::min(his.lastPass, 20U) * 0.5;
                 // forget 20%
                 if((his.lastHistory & 1) == 0)
                     weight += 20.0;
@@ -213,7 +216,7 @@ public:
                 for(auto&& his : mHistory)
                     mNew.emplace_back(his.first);
                 std::sort(mNew.begin(), mNew.end(), [this](GUID lhs, GUID rhs) {
-                    return mHistory[lhs].lastTime < mHistory[rhs].lastTime;
+                    return mHistory[lhs].lastPass < mHistory[rhs].lastPass;
                 });
                 for(auto&& his : mHistory)
                     if((his.second.lastHistory & 7U) != 7U)
@@ -238,7 +241,7 @@ public:
             std::cout << "Weight:" << his.weight << " History:";
             for(uint32_t i = 0; i < std::min(32U, his.testCnt); ++i)
                 std::cout << ((his.lastHistory >> i) & 1 ? 'T' : 'F');
-            std::cout << " Time:" << his.lastTime << " days ago" << std::endl;
+            std::cout << " Time:" << his.lastPass << " days ago" << std::endl;
             return res;
         }
         BUS_TRACE_END();
@@ -303,8 +306,15 @@ public:
         }
         BUS_TRACE_END();
     }
-    std::vector<Ratio> analyse() override {
-        return mAResults;
+    AnalyseResult analyse() override {
+        BUS_TRACE_BEG() {
+            std::map<uint32_t, uint32_t> lastPass;
+            for(auto&& his : mHistory)
+                ++lastPass[his.second.lastPass];
+            return { mAResults, lastPass,
+                     static_cast<uint32_t>(mHistory.size()) };
+        }
+        BUS_TRACE_END();
     }
     double getAcc(GUID guid) override {
         const auto& his = mHistory[guid];

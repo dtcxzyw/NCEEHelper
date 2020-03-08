@@ -6,6 +6,12 @@ struct Ratio final {
     double accuracy, coverage, master, emaster;
 };
 
+struct AnalyseResult final {
+    std::vector<Ratio> ratio;
+    std::map<uint32_t, uint32_t> lastPass;
+    uint32_t cnt;
+};
+
 enum class TestMode { Weight, Master, Review };
 
 class TestEngine : public Bus::ModuleFunctionBase {
@@ -23,6 +29,6 @@ public:
     virtual GUID sampleTest() = 0;
     virtual std::string summary() = 0;
     virtual void recordTestResult(TestResult res) = 0;
-    virtual std::vector<Ratio> analyse() = 0;
+    virtual AnalyseResult analyse() = 0;
     virtual double getAcc(GUID guid) = 0;
 };
