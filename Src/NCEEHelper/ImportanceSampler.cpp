@@ -105,7 +105,7 @@ private:
                     his.lastHistory =
                         ((his.lastHistory << 1) | static_cast<uint32_t>(res));
                     if(res)
-                        his.lastPass = day;
+                        his.lastPass = std::min(his.lastPass, day);
                     ++mValid;
                     mQueue.push_back(res);
                     while(mQueue.size() > queueSize)
