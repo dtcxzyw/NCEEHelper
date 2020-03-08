@@ -35,7 +35,7 @@ public:
             std::cout << klib->summary() << std::endl;
             fs::path hisPath = historyRoot / argv[2] / argv[1];
             eng->init(hisPath, klib->getTable(), TestMode::Weight);
-            auto [res, lastPass, all] = eng->analyse();
+            auto [res, lastPass] = eng->analyse();
             {
                 Ratio empty{ 0U, 0.0, 0.0, 0.0, 0.0 };
                 if(res.size())
@@ -55,8 +55,7 @@ public:
                     fs::path("Results") / (std::string(argv[1]) + ".res");
                 std::ofstream out(outputPath);
                 for(auto cnt : lastPass)
-                    out << cnt.first << " "
-                        << static_cast<double>(cnt.second) / all << std::endl;
+                    out << cnt.first << " " << cnt.second << std::endl;
                 std::cout << "->" << outputPath << std::endl;
             }
             return EXIT_SUCCESS;

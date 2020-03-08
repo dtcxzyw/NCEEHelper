@@ -311,8 +311,7 @@ public:
             std::map<uint32_t, uint32_t> lastPass;
             for(auto&& his : mHistory)
                 ++lastPass[his.second.lastPass];
-            return { mAResults, lastPass,
-                     static_cast<uint32_t>(mHistory.size()) };
+            return { mAResults, lastPass };
         }
         BUS_TRACE_END();
     }

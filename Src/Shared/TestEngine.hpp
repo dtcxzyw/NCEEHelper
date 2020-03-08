@@ -9,7 +9,6 @@ struct Ratio final {
 struct AnalyseResult final {
     std::vector<Ratio> ratio;
     std::map<uint32_t, uint32_t> lastPass;
-    uint32_t cnt;
 };
 
 enum class TestMode { Weight, Master, Review };

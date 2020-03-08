@@ -46,19 +46,25 @@ def generateTime(klib):
     with open(path, encoding="utf-8") as f:
         for line in f:
             data = line.split()
-            px = int(data[0])
-            if px == 10000:
+            px = data[0]
+            if px == "10000":
                 px = "never"
             ticks.append(px)
             cnt = cnt+1
             X.append(cnt)
-            A.append(float(data[1]))
+            A.append(int(data[1]))
     ct = time.localtime(time.time())
     plt.title("{} {}.{}.{}".format(klib, ct.tm_year, ct.tm_mon, ct.tm_mday))
     plt.xlabel("Date")
-    plt.ylabel("Ratio")
-    plt.ylim(0.0, 1.0)
-    plt.bar(X, A)
+    plt.ylabel("Count")
+    rects = plt.bar(X, A)
+    for rect in rects:
+        height = rect.get_height()
+        plt.annotate('{}'.format(height),
+                     xy=(rect.get_x() + rect.get_width() / 2, height),
+                     xytext=(0, 1),
+                     textcoords="offset points",
+                     ha='center', va='bottom')
     plt.xticks(X, ticks)
     plt.savefig("ARes/{}-Time.png".format(klib))
     plt.close('all')
