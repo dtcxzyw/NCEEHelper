@@ -10,7 +10,7 @@ BUS_MODULE_NAME("NCEEHelper.Builtin.TestDriver");
 static TestMode getMode(const std::string& par) {
     BUS_TRACE_BEG() {
         static std::map<std::string, TestMode> table = {
-            { "master", TestMode::Master },
+            { "Master", TestMode::Master },
             { "Default", TestMode::Weight },
             { "Review", TestMode::Review }
         };

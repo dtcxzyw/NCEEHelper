@@ -218,9 +218,12 @@ public:
                 std::sort(mNew.begin(), mNew.end(), [this](GUID lhs, GUID rhs) {
                     return mHistory[lhs].lastPass < mHistory[rhs].lastPass;
                 });
+                GUIDTable tmp;
                 for(auto&& his : mHistory)
                     if((his.second.lastHistory & 7U) != 7U)
-                        mNew.emplace_back(his.first);
+                        tmp.emplace_back(his.first);
+                std::shuffle(tmp.begin(), tmp.end(), mRNG);
+                mNew.insert(mNew.end(), tmp.begin(), tmp.end());
             }
         }
         BUS_TRACE_END();

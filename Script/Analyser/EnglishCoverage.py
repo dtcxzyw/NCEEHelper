@@ -118,7 +118,7 @@ def countFile(file):
                         miss += 1
                         stra.add(lwt)
 
-    return (hit, miss, stra)
+    return (hit, miss, stra, fima)
 
 
 def count(dirs):
@@ -134,14 +134,17 @@ def count(dirs):
     cnt = 0
 
     stra = []
+    fima = []
 
     with Pool(processes=8) as pool:
-        for nh, nm, nstra in pool.imap_unordered(countFile, tasks):
+        for nh, nm, nstra, nfima in pool.imap_unordered(countFile, tasks):
             hit += nh
             miss += nm
             cnt += 1
             for word in nstra:
                 stra.append(word)
+            for word in nfima:
+                fima.append(word)
             print("count {} hit {} miss {}".format(cnt, hit, miss))
             print("coverage {:.2f}%".format(hit*100.0/(hit+miss+1)))
             print("process {:.2f}%".format(cnt*100.0/tot))
@@ -159,6 +162,13 @@ def count(dirs):
                 out.write("#S# {} {}\n".format(word, freq))
             else:
                 out.write("{} {}\n".format(word, freq))
+
+    for word in wordDict:
+        fima.append(word)
+
+    with open("./Output/english-count-"+wordDictName+".txt", "w", encoding="utf-8") as out:
+        for (word, freq) in nltk.FreqDist(fima).most_common():
+            out.write("{} {} {}\n".format(word, freq-1, freq-1 < 100))
 
 
 if __name__ == '__main__':
