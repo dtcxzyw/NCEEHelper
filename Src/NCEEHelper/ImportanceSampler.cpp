@@ -223,7 +223,13 @@ public:
                     if((his.second.lastHistory & 7U) != 7U)
                         tmp.emplace_back(his.first);
                 std::shuffle(tmp.begin(), tmp.end(), mRNG);
-                mNew.insert(mNew.end(), tmp.begin(), tmp.end());
+                constexpr auto interval = 20U;
+                for(size_t i = 0ULL; i < tmp.size(); i += interval) {
+                    for(int k = 0; k < 2; ++k)
+                        for(size_t j = 0ULL; j < interval && i + j < tmp.size();
+                            ++j)
+                            mNew.push_back(tmp[i + j]);
+                }
             }
         }
         BUS_TRACE_END();
