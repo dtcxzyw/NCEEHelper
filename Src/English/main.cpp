@@ -608,6 +608,8 @@ public:
     }
 };
 
+void speak(const std::string& str);
+
 class ReadWord final : public KnowledgeLibrary {
 private:
     struct ReadWordEntry final {
@@ -671,6 +673,7 @@ public:
             res.kpID = { kpID };
             res.result = -1;
             auto&& entry = mRWS[kpID];
+            speak(entry.word);
             std::cout << entry.word << "[" << entry.pos << "]" << std::endl;
             std::string line;
             std::getline(std::cin, line);
