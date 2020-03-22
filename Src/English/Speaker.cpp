@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
 #ifdef WIN32
+#include <atlbase.h>
 #include <sapi.h>
+#include <sphelper.h>
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "sapi.lib")
 namespace {
@@ -14,6 +16,26 @@ namespace {
             ::CoInitialize(NULL);
             CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice,
                              (void**)&mVoice);
+            CComPtr<ISpObjectToken> cpVoiceToken;
+            CComPtr<IEnumSpObjectTokens> cpEnum;
+            ULONG ulCount = 0;
+
+            // Create the SAPI voice.
+
+            SpEnumTokens(SPCAT_VOICES, NULL, NULL, &cpEnum);
+
+            cpEnum->GetCount(&ulCount);
+
+            // Obtain a list of available voice tokens, set
+            // the voice to the token, and call Speak.
+            while(ulCount--) {
+                cpVoiceToken.Release();
+                cpEnum->Next(1, &cpVoiceToken, NULL);
+                LPWSTR str = nullptr;
+                cpVoiceToken->GetId(&str);
+                wprintf(L"%s\n", str);
+                mVoice->SetVoice(cpVoiceToken);
+            }
         }
         ~SAPI() {
             mVoice->Release();
