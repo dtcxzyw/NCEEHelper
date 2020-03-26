@@ -218,20 +218,27 @@ public:
                 std::sort(mNew.begin(), mNew.end(), [this](GUID lhs, GUID rhs) {
                     return mHistory[lhs].lastPass < mHistory[rhs].lastPass;
                 });
-                for(auto&& his : mHistory)
-                    if((his.second.lastHistory & 7U) != 7U)
-                        mNew.emplace_back(his.first);
-                GUIDTable tmp;
-                for(auto&& his : mHistory)
-                    if((his.second.lastHistory & 0b111111) == 0U)
-                        tmp.emplace_back(his.first);
-                std::shuffle(tmp.begin(), tmp.end(), mRNG);
-                constexpr auto interval = 20U;
-                for(size_t i = 0ULL; i < tmp.size(); i += interval) {
-                    for(int k = 0; k < 2; ++k)
-                        for(size_t j = 0ULL; j < interval && i + j < tmp.size();
-                            ++j)
-                            mNew.push_back(tmp[i + j]);
+                {
+                    GUIDTable tmp;
+                    for(auto&& his : mHistory)
+                        if((his.second.lastHistory & 7U) != 7U)
+                            tmp.emplace_back(his.first);
+                    std::shuffle(tmp.begin(), tmp.end(), mRNG);
+                    mNew.insert(mNew.end(), tmp.begin(), tmp.end());
+                }
+                {
+                    GUIDTable tmp;
+                    for(auto&& his : mHistory)
+                        if((his.second.lastHistory & 0b11111) == 0U)
+                            tmp.emplace_back(his.first);
+                    std::shuffle(tmp.begin(), tmp.end(), mRNG);
+                    constexpr auto interval = 20U;
+                    for(size_t i = 0ULL; i < tmp.size(); i += interval) {
+                        for(int k = 0; k < 2; ++k)
+                            for(size_t j = 0ULL;
+                                j < interval && i + j < tmp.size(); ++j)
+                                mNew.push_back(tmp[i + j]);
+                    }
                 }
             }
         }
