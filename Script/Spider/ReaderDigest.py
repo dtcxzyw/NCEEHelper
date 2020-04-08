@@ -77,7 +77,7 @@ def getContent(name, url):
         return
     text = getHtml(url)
     soup = BeautifulSoup(text, "lxml")
-    blks = soup.select_one('div[class="entry-content"]')
+    blks = soup.select_one('section[class="content-wrapper pure-g"]')
     if blks == None:
         print("invalid article {}".format(url))
         return
@@ -106,12 +106,11 @@ def searchIndex(address, base):
 
     soup = BeautifulSoup(text, "lxml")
 
-    blks = soup.select_one('div[class="site-inner"]')
-
-    for blk in blks.select('a'):
-        url = blk['href']
-        if url.find(base) != -1 and (base.find("culture") != -1 or url.count("/") >= 6) and url != base:
-            getContentUrl(url, len(base))
+    for blks in soup.select('section[class="archive-content"]'):
+        for blk in blks.select('a'):
+            url = blk['href']
+            if url.find(base) != -1 and (base.find("culture") != -1 or url.count("/") >= 6) and url != base:
+                getContentUrl(url, len(base))
 
     nxt = soup.select_one('a[class="next page-numbers"]')
     if nxt != None:
