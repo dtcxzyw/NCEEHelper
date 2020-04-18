@@ -4,6 +4,7 @@
 # https://github.com/rocketk/wordcounter
 # https://blog.csdn.net/zhuzuwei/article/details/80484501
 
+import sys
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.stem.wordnet import WordNetLemmatizer
@@ -79,13 +80,85 @@ def getWordnetPos(treebank_tag):
         return nltk.corpus.wordnet.NOUN
 
 
-wordDictName = "readword"
-#wordDictName = "zgk"
+wordDictName = sys.argv[1]
 
-wordDict = ReadWordDict.Dict(
-    "../../DataBase/English/ECDICTData/"+wordDictName+".db").dumps()
-stdDict = ReadWordDict.Dict(
-    "../../DataBase/English/ECDICTData/stardict.db").dumps()
+if wordDictName != "readword" and wordDictName != "zgk":
+    raise "BadDict"
+
+
+def toSet(dic):
+    resDict = set()
+    for word in dic:
+        if word.isalpha():
+            resDict.add(word)
+    return resDict
+
+
+wordDict = toSet(ReadWordDict.Dict(
+    "../../DataBase/English/ECDICTData/"+wordDictName+".db").dumps())
+stdDict = toSet(ReadWordDict.Dict(
+    "../../DataBase/English/ECDICTData/stardict.db").dumps())
+
+
+def tryAdd(word):
+    global wordDict
+    global stdDict
+    if word in stdDict and word not in wordDict:
+        wordDict.add(word)
+
+
+def fixTail(word):
+    if word.endswith("y"):
+        return word[:-1]+"i"
+    if word.endswith("e"):
+        return word[:-1]
+    return None
+
+
+def extendDict():
+    import copy
+    global wordDict
+    baseDict = copy.deepcopy(wordDict)
+    prefix = [
+        "a",     "ab",   "ap",    "ante",  "anti",  "auto",  "be",
+        "bi",    "co",   "de",    "demi",  "dis",   "en",    "ex",
+        "extra", "fore", "mid",   "post",  "hyper", "hypo",  "in",
+        "im",    "ir",   "il",    "infra", "inter", "intra", "mis",
+        "mono",  "non",  "off",   "oft",   "out",   "over",  "para",
+        "post",  "pre",  "pro",   "poly",  "re",    "retro", "semi",
+        "sub",   "sur",  "trans", "ultra", "un",    "under", "up"
+    ]
+    suffix = [
+        "able", "age",   "al",   "ance",   "ant",  "ate",  "arian",
+        "ary",  "ation", "cy",   "cation", "dom",  "ee",   "er",
+        "ese",  "esque", "ess",  "en",     "ence", "ety",  "fold",
+        "ful",  "hood",  "ics",  "ial",    "ical", "ify",  "ion",
+        "ish",  "ism",   "ist",  "ista",   "ite",  "itis", "ize",
+        "ive",  "ity",   "less", "let",    "ling", "logy", "ment",
+        "most", "ness",  "oid",  "or",     "ory",  "ous",  "ship",
+        "t",    "ty",    "th",   "ward",   "wise", "y",    "ure",
+        "ze"
+    ]
+    rep = [("al", "ety"), ("ous", "ety"), ("ble", "bility"), ("t", "cy"),
+           ("te", "cy"), ("t", "ssion"), ("ve", "f"), ("d", "se"), ("d", "sion"),
+           ("fy", "fication"), ("e", "ption"), ("ve", "ption"), ("be", "ption")]
+    for word in baseDict:
+        for pre in prefix:
+            tryAdd(pre+word)
+        for suf in suffix:
+            tryAdd(word+suf)
+        fw = fixTail(word)
+        if fw != None:
+            for suf in suffix:
+                tryAdd(fw+suf)
+        for pair in rep:
+            if word.endswith(pair[0]):
+                tryAdd(word[:-len(pair[0])]+pair[1])
+
+
+oldSize = len(wordDict)
+extendDict()
+print("Size {}->{}".format(oldSize, len(wordDict)))
 
 
 def countFile(file):
@@ -173,3 +246,4 @@ def count(dirs):
 
 if __name__ == '__main__':
     count({'../Spider/Output/ReaderDigest/', '../Spider/Output/Science/'})
+    pass

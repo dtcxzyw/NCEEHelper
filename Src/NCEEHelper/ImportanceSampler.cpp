@@ -54,7 +54,7 @@ private:
                 res.accuracy = pass / static_cast<double>(test);
             res.coverage = coverage / tot;
             res.master = master / tot;
-            res.emaster = (master + m1 + m2) / (3 * tot);
+            res.emaster = (master + m1 + m2) / (3.0 * tot);
             return res;
         }
         BUS_TRACE_END();
@@ -131,7 +131,7 @@ private:
                              (his.testCnt + 0.001) / (his.passCnt + 0.001));
                 // new knowledge 10%
                 if(his.testCnt <= 3)
-                    weight += 10.0 - his.testCnt * 3;
+                    weight += 10.0 - his.testCnt * 3.0;
                 // time 10%
                 weight += std::min(his.lastPass, 20U) * 0.5;
                 // forget 20%
@@ -165,7 +165,7 @@ private:
 
 public:
     explicit ImportanceSampler(Bus::ModuleInstance& instance)
-        : TestEngine(instance) {}
+        : TestEngine(instance), mCurrent(0), mInvalid(0), mValid(0) {}
     void init(const fs::path& history, const GUIDTable& table,
               TestMode mode) override {
         BUS_TRACE_BEG() {
