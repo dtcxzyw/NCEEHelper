@@ -34,7 +34,8 @@ public:
             klib->load(dataBaseRoot);
             std::cout << klib->summary() << std::endl;
             fs::path hisPath = historyRoot / argv[2] / argv[1];
-            eng->init(hisPath, klib->getTable(), TestMode::Weight);
+            auto table = klib->getTable();
+            eng->init(hisPath, table, TestMode::Weight);
             auto [res, lastPass] = eng->analyse();
             {
                 Ratio empty{ 0U, 0.0, 0.0, 0.0, 0.0 };
@@ -56,6 +57,18 @@ public:
                 std::ofstream out(outputPath);
                 for(auto cnt : lastPass)
                     out << cnt.first << " " << cnt.second << std::endl;
+                std::cout << "->" << outputPath << std::endl;
+            }
+            {
+                fs::path outputPath =
+                    fs::path("Results") / (std::string(argv[1]) + ".dist");
+                std::map<double, uint32_t> dist;
+                for(auto id : table)
+                    ++dist[eng->getAcc(id)];
+                std::ofstream out(outputPath);
+                for(auto cnt : dist)
+                    if(cnt.first != -1.0)
+                        out << cnt.first << " " << cnt.second << std::endl;
                 std::cout << "->" << outputPath << std::endl;
             }
             return EXIT_SUCCESS;

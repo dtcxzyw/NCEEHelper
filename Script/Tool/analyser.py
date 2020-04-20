@@ -70,6 +70,25 @@ def generateTime(klib):
     plt.close('all')
 
 
+def generateAcc(klib):
+    import seaborn as sns
+    path = "../../Bin/Results/{}.dist".format(klib)
+    X = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            data = line.split()
+            acc = float(data[0])
+            for i in range(int(data[1])):
+                X.append(acc)
+    ct = time.localtime(time.time())
+    plt.title("{} {}.{}.{}".format(klib, ct.tm_year, ct.tm_mon, ct.tm_mday))
+    plt.xlabel("Acc")
+    plt.ylabel("Density")
+    sns.distplot(X, bins=10, norm_hist=True)
+    plt.savefig("ARes/{}-Acc.png".format(klib))
+    plt.close('all')
+
+
 def generate(klib):
     cmd = "cd ../../Bin && NCEEHelper.exe Analyser {} ImportanceSampler".format(
         klib)
@@ -79,6 +98,7 @@ def generate(klib):
         return
     generateTest(klib)
     generateTime(klib)
+    generateAcc(klib)
 
 
 if __name__ == "__main__":
