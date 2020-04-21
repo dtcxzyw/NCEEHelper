@@ -3,11 +3,8 @@
 ## 测试分析
 
 ![img](Script/Tool/ARes/Biology.png)
-![img](Script/Tool/ARes/Biology-Time.png)
 ![img](Script/Tool/ARes/WordCast.png)
-![img](Script/Tool/ARes/WordCast-Time.png)
 ![img](Script/Tool/ARes/ReadWord.png)
-![img](Script/Tool/ARes/ReadWord-Time.png)
 
 ## 软件部分
 
