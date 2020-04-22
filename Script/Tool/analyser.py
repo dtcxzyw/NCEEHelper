@@ -74,7 +74,7 @@ def generateAcc(klib, ax):
             acc = float(data[0])
             for i in range(int(data[1])):
                 X.append(acc)
-    ax.set_xlabel("Acc")
+    ax.set_xlabel("Accuracy")
     ax.set_ylabel("Density")
     sns.distplot(X, bins=10, norm_hist=True, ax=ax)
 
