@@ -38,6 +38,7 @@ namespace {
             }
         }
         ~SAPI() {
+            mVoice->WaitUntilDone(-1);
             mVoice->Release();
             ::CoUninitialize();
         }
