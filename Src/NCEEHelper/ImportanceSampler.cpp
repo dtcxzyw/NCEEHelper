@@ -209,9 +209,12 @@ public:
                 reporter().apply(ReportLevel::Debug,
                                  "new size: " + std::to_string(mNew.size()),
                                  BUS_DEFSRCLOC());
-                // std::shuffle(mNew.begin(), mNew.end(), mRNG);
+                std::shuffle(mNew.begin(), mNew.end(), mRNG);
                 if(mNew.size() > static_cast<size_t>(20))
                     mNew.resize(static_cast<size_t>(20));
+                for(auto&& his : mHistory)
+                    if((his.second.lastHistory & 7U) != 7U)
+                        mNew.emplace_back(his.first);
             } else {
                 for(auto&& his : mHistory)
                     mNew.emplace_back(his.first);
