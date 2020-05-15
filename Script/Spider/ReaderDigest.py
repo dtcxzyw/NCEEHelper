@@ -79,6 +79,8 @@ def getContent(name, url):
     soup = BeautifulSoup(text, "lxml")
     blks = soup.select_one('section[class="content-wrapper pure-g"]')
     if blks == None:
+        blks = soup.select_one('div[class="post-body"]')
+    if blks == None:
         print("invalid article {}".format(url))
         return
     out = open(filename, "w", encoding='utf-8')
