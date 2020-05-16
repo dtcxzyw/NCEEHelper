@@ -48,4 +48,4 @@ def count(dirs):
 if __name__ == '__main__':
     # jieba.enable_paddle()
     count({'../Spider/Output/XinHua/', '../Spider/Output/People/',
-           "../Spider/Output/GuangMing/"})
+           "../Spider/Output/GuangMing/", "../Spider/Output/HuanQiu/"})
