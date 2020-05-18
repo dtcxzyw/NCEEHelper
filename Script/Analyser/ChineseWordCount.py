@@ -16,25 +16,22 @@ def countFile(filename, counts):
     words = pseg.cut(text)
     for word, flag in words:
         word = re.sub(nchn, "", word)
-        if word.isspace() or len(word) <= 1:
-            continue
-        dic = counts.get(flag, dict())
-        dic[word] = dic.get(word, 0) + 1
-        counts[flag] = dic
+        counts[word] = counts.get(word, 0) + 1
 
 
 def output(counts):
-    for flag, dic in counts.items():
-        out = open("./Output/chinese/{}.txt".format(flag),
-                   "w", encoding="utf-8")
-        items = list(dic.items())
-        items.sort(key=lambda x: x[1], reverse=True)
-        for word, count in items:
+    stopwords = set(line.strip() for line in open(
+        "Output/chineseFilter.txt", encoding="utf-8").readlines())
+    out = open("./Output/chineseCount.txt", "w", encoding="utf-8")
+    items = list(counts.items())
+    items.sort(key=lambda x: x[1], reverse=True)
+    for word, count in items:
+        if word not in stopwords:
             out.write("{:<10}{:>7}\n".format(word, count))
 
 
 def count(dirs):
-    counts = {}
+    counts = dict()
     cnt = 0
     for d in dirs:
         for r, sd, files in os.walk(d):
