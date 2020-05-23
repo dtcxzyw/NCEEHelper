@@ -339,9 +339,14 @@ public:
     }
     double getAcc(GUID guid) override {
         const auto& his = mHistory[guid];
-        if(his.testCnt)
-            return static_cast<double>(his.passCnt) / his.testCnt;
-        else
+        if(his.testCnt) {
+            if(his.testCnt <= 10)
+                return static_cast<double>(his.passCnt) / his.testCnt;
+            double res = 0.0;
+            for(uint32_t i = 0; i < 10; ++i)
+                res += (((his.lastHistory >> i) & 1) ? 0.1 : 0.0);
+            return res;
+        } else
             return -1.0;
     }
 };
