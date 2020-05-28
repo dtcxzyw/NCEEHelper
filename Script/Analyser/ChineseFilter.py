@@ -20,7 +20,7 @@ def countLine(line):
     return counts
 
 
-def countFile(filename, counts):
+def countFile(filename, counts, num):
     with open(filename, encoding="utf-8") as file:
         widgets = ['Progress: ', Percentage(), ' ', Bar('#'), ' ',
                    Timer(), ' ', ETA()]
@@ -28,7 +28,7 @@ def countFile(filename, counts):
 
         siz = len(lines)
 
-        with Pool(processes=6) as pool:
+        with Pool(processes=num) as pool:
             pbar = ProgressBar(widgets=widgets, maxval=siz).start()
             cnt = 0
             for res in pool.imap_unordered(countLine, lines):
@@ -45,7 +45,7 @@ def output(counts):
         out.write(word+"\n")
 
 
-def count(dir):
+def count(dir, num):
     counts = set()
     cnt = 0
     for r, sd, files in os.walk(dir):
@@ -53,10 +53,11 @@ def count(dir):
             cnt = cnt+1
             path = r+"/"+f
             print("{} {}".format(cnt, path))
-            countFile(path, counts)
+            countFile(path, counts, num)
     output(counts)
 
 
 if __name__ == '__main__':
     # jieba.enable_paddle()
-    count("./Input/raw_chat_corpus")
+    num = sys.argv[1]
+    count("./Input/raw_chat_corpus", int(num))

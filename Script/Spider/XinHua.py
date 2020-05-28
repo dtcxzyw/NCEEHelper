@@ -37,6 +37,8 @@ def getHtml(address):
 
 
 def dfsWrite(out, blk):
+    if blk == None:
+        return False
     if blk.string == None or blk.string.strip() == "":
         if hasattr(blk, "children"):
             for sub in blk.children:
@@ -70,9 +72,13 @@ def getContent(name, url):
     soup = BeautifulSoup(text, "lxml")
     blk = soup.select_one('div[id="p-detail"]')
     if blk == None:
+        blk = soup.select_one('div[id="content"]')
+    if blk == None:
+        print("Bad article")
         return
     out = open(filename, "w", encoding='utf-8')
     dfsWrite(out, soup.select_one('div[class="h-title"]'))
+    dfsWrite(out, soup.select_one('h1'))
     dfsWrite(out, blk)
     print("{} -> {}".format(url, name))
     vaild = vaild+1
