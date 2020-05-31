@@ -39,12 +39,16 @@ def countBigFile(filename, counts, num):
             pbar.finish()
 
 
+stopflag = set({"nr", "nr1", "nr2", "nrj", "nrf", "ns", "nsf", "nt", "nz"})
+
+
 def countFile(filename, counts, num):
     text = open(filename, encoding="utf-8").read()
     text = re.sub(nchn, "", text)
     words = pseg.cut(text)
     for word, flag in words:
-        counts[word] = counts.get(word, 0) + 1
+        if flag not in stopflag:
+            counts[word] = counts.get(word, 0) + 1
 
 
 def outputFilter(counts):
@@ -57,23 +61,22 @@ def outputFilter(counts):
 
 
 def loadStopWords():
-    threshold = int(sys.argv[2])
-    res = set()
+    res = dict()
     with open("Output/chineseFilter.txt", encoding="utf-8") as f:
         for line in f:
             data = line.split()
-            if int(data[1]) >= threshold:
-                res.add(data[0])
+            res[data[0]] = int(data[1])
     return res
 
 
 def outputCount(counts):
     stopwords = loadStopWords()
+    threshold = float(sys.argv[2])
     out = open("./Output/chineseCount.txt", "w", encoding="utf-8")
     items = list(counts.items())
     items.sort(key=lambda x: x[1], reverse=True)
     for word, count in items:
-        if word not in stopwords:
+        if len(word) >= 4 and count >= stopwords.get(word, 0)*threshold:
             out.write("{:<10}{:>7}\n".format(word, count))
 
 
