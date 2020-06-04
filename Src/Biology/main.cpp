@@ -94,6 +94,9 @@ public:
     void outputAnswer(GUID id, std::ostream& out) override {
         mKPS[id]->outputAnswer(out);
     }
+    void outputBoth(GUID id, std::ostream& out) override {
+        mKPS[id]->outputBoth(out);
+    }
 };
 
 class Instance final : public Bus::ModuleInstance {

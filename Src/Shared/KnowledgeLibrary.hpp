@@ -36,4 +36,11 @@ public:
         }
         BUS_TRACE_END();
     }
+    virtual void outputBoth(GUID id, std::ostream& out) {
+        BUS_MODULE_NAME("NCEEHelper.KnowledgeLibrary");
+        BUS_TRACE_BEG() {
+            BUS_TRACE_THROW(std::logic_error("Not implemented."));
+        }
+        BUS_TRACE_END();
+    }
 };

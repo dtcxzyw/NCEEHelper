@@ -15,6 +15,7 @@ struct Piece final {
     std::vector<String> ans;
     String state;
     PieceType type;
+    Piece() : type(PieceType::Fill) {}
 };
 
 class FillTester final : public Tester {
@@ -126,6 +127,16 @@ public:
                     out << (k ? "," : "") << cp.ans[k];
                 out << "  ";
             }
+    }
+    void outputBoth(std::ostream& out) override {
+        for(auto&& cp : mPieces)
+            if(cp.type == PieceType::Fill) {
+                out << "<u>";
+                for(size_t k = 0; k < cp.ans.size(); ++k)
+                    out << (k ? "," : "") << cp.ans[k];
+                out << "</u>";
+            } else
+                out << cp.state;
     }
 };
 

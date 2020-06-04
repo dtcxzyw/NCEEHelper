@@ -15,4 +15,5 @@ public:
     virtual int test() = 0;
     virtual void outputProblem(std::ostream& out) = 0;
     virtual void outputAnswer(std::ostream& out) = 0;
+    virtual void outputBoth(std::ostream& out) = 0;
 };

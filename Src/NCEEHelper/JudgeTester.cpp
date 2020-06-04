@@ -16,12 +16,13 @@ private:
     std::vector<String> mReason;
 
 public:
-    explicit JudgeTester(Bus::ModuleInstance& instance) : Tester(instance) {}
+    explicit JudgeTester(Bus::ModuleInstance& instance)
+        : Tester(instance), mAnswer(false) {}
     GUID init(std::shared_ptr<Config> cfg) override {
         BUS_TRACE_BEG() {
             std::string desc = cfg->asString();
             if(desc.size() <= 38)
-                BUS_TRACE_THROW(std::logic_error("Bad description"));
+                BUS_TRACE_THROW(std::logic_error("Bad description " + desc));
             GUID id = str2GUID(desc.substr(0, 38));
             desc = desc.substr(38);
             String str(desc.c_str(), "utf8");
@@ -31,7 +32,7 @@ public:
             CHECKSTATUS();
             matcher.reset(str);
             if(!matcher.matches(status))
-                BUS_TRACE_THROW(std::logic_error("Bad description"));
+                BUS_TRACE_THROW(std::logic_error("Bad description " + desc));
             CHECKSTATUS();
             mProblem = matcher.group(1, status);
             CHECKSTATUS();
@@ -89,6 +90,15 @@ public:
         out << (mAnswer ? "√" : "X");
         if(mReason.size()) {
             out << " ";
+            for(auto rea : mReason)
+                out << rea << " ";
+        }
+    }
+    void outputBoth(std::ostream& out) override {
+        out << mProblem << " ";
+        out << (mAnswer ? "(√)" : "(X)");
+        if(mReason.size()) {
+            out << " 原因/例子：";
             for(auto rea : mReason)
                 out << rea << " ";
         }
