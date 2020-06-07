@@ -134,10 +134,10 @@ def extendDict():
         "ese",  "esque", "ess",  "en",     "ence", "ety",  "fold",
         "ful",  "hood",  "ics",  "ial",    "ical", "ify",  "ion",
         "ish",  "ism",   "ist",  "ista",   "ite",  "itis", "ize",
-        "ive",  "ity",   "less", "let",    "ling", "logy", "ment",
-        "most", "ness",  "oid",  "or",     "ory",  "ous",  "ship",
-        "t",    "ty",    "th",   "ward",   "wise", "y",    "ure",
-        "ze"
+        "ive",  "ity",   "less", "let",    "ling", "logy", "ly",
+        "ment", "most", "ness",  "oid",  "or",     "ory",  "ous",
+        "ship", "t",    "ty",    "th",   "ward",   "wise", "y",
+        "ure", "ze"
     ]
     rep = [("al", "ety"), ("ous", "ety"), ("ble", "bility"), ("t", "cy"),
            ("te", "cy"), ("t", "ssion"), ("ve", "f"), ("d", "se"), ("d", "sion"),
@@ -159,6 +159,10 @@ def extendDict():
 oldSize = len(wordDict)
 extendDict()
 print("Size {}->{}".format(oldSize, len(wordDict)))
+
+stopwords = set(line.strip() for line in open(
+    "Input/ensw.txt", encoding="utf-8").readlines())
+stdDict = stdDict - stopwords
 
 
 def countFile(file):
@@ -226,15 +230,9 @@ def count(dirs):
     print("count {} hit {} miss {}".format(tot, hit, miss))
     print("coverage {}%".format(hit*100.0/(hit+miss+1)))
 
-    stopwords = [line.strip() for line in open(
-        "Input/ensw.txt", encoding="utf-8").readlines()]
-
     with open("./Output/english-"+wordDictName+".txt", "w", encoding="utf-8") as out:
         for (word, freq) in nltk.FreqDist(stra).most_common(1000):
-            if word in stopwords:
-                out.write("#S# {} {}\n".format(word, freq))
-            else:
-                out.write("{} {}\n".format(word, freq))
+            out.write("{} {}\n".format(word, freq))
 
     for word in wordDict:
         fima.append(word)
