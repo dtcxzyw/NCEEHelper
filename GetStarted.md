@@ -66,3 +66,4 @@
 + 研究如何从时评中得到自己需要的东西（我实验了几个月得到的还是噪声大到没法用的结果）
 + 等NLP发展成熟了，试试直接通过OCR从书本中提取关键知识并挖空
 + 吐槽我的代码和随性的gitcommit记录（和OI-Source一个风格）
++ 使用[Foam](https://github.com/foambubble/foam)
