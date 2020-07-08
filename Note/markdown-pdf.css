@@ -5,7 +5,7 @@
 p {
 	margin-block-start:2px;
 	margin-block-end: 2px;
-	text-indent:32px;
+	/* text-indent:32px;*/
 	line-height: 18px;
 }
 
