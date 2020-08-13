@@ -40,3 +40,5 @@
 /Script/Analyser/Output
 /Script/Analyser/Input
 *.pdf
+*.jpg
+*.zip
