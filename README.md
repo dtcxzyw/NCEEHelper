@@ -18,9 +18,9 @@ Piper的开发暂停了，接下来要做什么呢？于是我就有了NCEEHelpe
 
 测试统计（这事实上是一种增强自信的方法，要不然我为什么还要加个E[Master]?）
 
-    ![img](Script/Tool/ARes/Biology.png)
-    ![img](Script/Tool/ARes/WordCast.png)
-    ![img](Script/Tool/ARes/ReadWord.png)
+![img](Script/Tool/ARes/Biology.png)
+![img](Script/Tool/ARes/WordCast.png)
+![img](Script/Tool/ARes/ReadWord.png)
 
 为什么我能够做到阅读词汇测试50min1000个，生物测试30min200个呢？除了不用打字和较为熟练外，更大的原因是我在测试的过程中尽可能不让自己思考。这也就是为什么我没有把生物知识点拆分成树形结构的原因。哈希表和树的性能差异，想必你们应该清楚。我通过付出更多的时间（其实应该是更少）去构建这一个hash表，从而保证了我的做题速度。（之前的理综练习中生物最快只要15min）
 
