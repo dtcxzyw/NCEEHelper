@@ -6,7 +6,7 @@ Faker==4.0.0
 Pattern==3.6
 numpy==1.22.0
 requests==2.32.2
-nltk==3.6.6
+nltk==3.9
 seaborn==0.10.0
 beautifulsoup4==4.9.1
 en==0.0.1
